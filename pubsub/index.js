@@ -1,15 +1,9 @@
 module.exports = {
-
-  // Create a pubsub client
-  var pubsub = gcloud.pubsub({
-    // We're using the API from the same project as the Cloud Function
-    projectId: process.env.GCP_PROJECT,
-  });  
-
   /**
    * Publishes a message to a Cloud Pub/Sub Topic 
    */
   "publish" : function (context, data) {
+  
     var topicName = data['topic'];
     var message = data['message'];
 
@@ -20,6 +14,12 @@ module.exports = {
         context.failure("Message not provided.  Make sure you have a 'message' property in your request");
       } else {
         console.log('Publishing message to topic ' + topicName);
+        
+        // Create a pubsub client
+        var pubsub = gcloud.pubsub({
+          // We're using the API from the same project as the Cloud Function
+          projectId: process.env.GCP_PROJECT,
+        });  
 
         // The Pub/Sub topic must already exist
         var topic = pubsub.topic(topicName);

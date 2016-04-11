@@ -36,3 +36,12 @@ This recipe shows you how to publish messages to a Cloud Pub/Sub topic from a Cl
 8.	Check the logs for the "subscribe" function
 
 		gcloud alpha functions get-logs subscribe
+		
+		
+	
+You should see something like this in your console
+```
+D      ... User function triggered, starting execution
+I      ... Hello World!
+D      ... Execution took 1 ms, user function completed successfully
+```

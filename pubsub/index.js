@@ -26,7 +26,9 @@ module.exports = {
         // The Pub/Sub topic must already exist
         var topic = pubsub.topic(topicName);
         topic.publish({
-          data: message
+          data: {
+            'message': message
+          }
         }, function(err) {
           if(err) {
             context.failure(err);

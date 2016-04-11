@@ -1,3 +1,5 @@
 # Google Cloud Functions Recipes
 
-[Cloud Pub/Sub](/pubsub)
+Publishing messages to [Google Cloud Pub/Sub](/pubsub)
+
+

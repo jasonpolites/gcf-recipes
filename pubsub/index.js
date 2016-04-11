@@ -25,6 +25,8 @@ module.exports = {
 
         // The Pub/Sub topic must already exist
         var topic = pubsub.topic(topicName);
+        
+        // Pub/Sub messages must be valid JSON objects
         topic.publish({
           data: {
             'message': message

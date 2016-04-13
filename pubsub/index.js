@@ -1,6 +1,7 @@
 var gcloud = require("gcloud");
 
 module.exports = {
+
   /**
    * Publishes a message to a Cloud Pub/Sub Topic 
    */

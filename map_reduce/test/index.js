@@ -1,6 +1,7 @@
 var map_reduce = require ('../index.js');
 var expect = require('chai').expect;
 var sinon = require('sinon');
+var req = require('request-promise');
 
 describe('Map Reduce Tests', function () {
   it("counts words in a line correctly", function() {

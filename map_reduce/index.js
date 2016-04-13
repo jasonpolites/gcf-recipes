@@ -33,6 +33,9 @@ module.exports = {
     // Get the location (url) of the map function
     var fnUrl = data['mapFunctionUrl'];
 
+    // Get the bucket containing our source file
+    var bucket = gcs.bucket(data['bucket']);
+
     // Load the master file using the stream API
     var inStream = bucket.file(data['file']).createReadStream();
 
@@ -48,20 +51,22 @@ module.exports = {
       // You could batch the lines here to send more than one to each mapper
       // but for simplicity we're just going to send each line
       promises.push(invoke(fnUrl, line));
-    });
+    });        
 
-    Promise.all(promises).then(function(err, result) {
-      if(err) {
-        context.failure(err);
-      } else {
-        // The result will be an array of return values from the mappers
-        var count = 0;
-        for(var i = 0; i < result.length; ++i) {
-          count += parseInt(result[i]);
+    lineReader.on('close', function () {
+      Promise.all(promises).then(function(err, result) {
+        if(err) {
+          context.failure(err);
+        } else {
+          // The result will be an array of return values from the mappers
+          var count = 0;
+          for(var i = 0; i < result.length; ++i) {
+            count += parseInt(result[i]);
+          }
+          context.success(count);
         }
-        context.success(count);
-      }
-    });
+      });
+    });       
   }
 }
 

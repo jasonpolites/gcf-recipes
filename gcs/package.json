@@ -1,0 +1,21 @@
+{
+  "name": "gcf-recipe-gcs",
+  "version": "1.0.0",
+  "description": "Google Cloud Functions Recipes - Cloud Storage",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "cloud",
+    "functions",
+    "gcp",
+    "gcf",
+    "gcs"
+  ],
+  "author": "Jason Polites",
+  "license": "ISC",
+  "dependencies": {
+    "gcloud": "^0.30.2"
+  }
+}

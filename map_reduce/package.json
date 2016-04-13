@@ -1,0 +1,32 @@
+{
+  "name": "gcf-recipe-mapr",
+  "version": "1.0.0",
+  "description": "Google Cloud Functions Recipes - Simple Map Reduce",
+  "main": "index.js",
+  "scripts": {
+    "preversion": "npm test",
+    "unit": "mocha --recursive test/ -t 3000",
+    "test": "npm run unit"
+  },
+  "keywords": [
+    "cloud",
+    "functions",
+    "gcp",
+    "gcf",
+    "mapreduce",
+    "map",
+    "reduce"
+  ],
+  "author": "Jason Polites",
+  "license": "ISC",
+  "dependencies": {
+    "gcloud": "^0.30.3",
+    "promise": "^7.1.1",
+    "request-promise": "^2.0.1"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^2.4.5",
+    "sinon": "^1.17.3"
+  }
+}

@@ -1,0 +1,20 @@
+var map_reduce = require ('../index.js');
+var expect = require('chai').expect;
+var sinon = require('sinon');
+
+describe('Map Reduce Tests', function () {
+  it("counts words in a line correctly", function() {
+    var line = "Shall I compare thee to a summer's day?";
+    var data = {
+      "line": line
+    };
+    var value;
+    var context = {
+      "success" : function(val) {
+        value = val;
+      }
+    };
+    map_reduce.map(context, data);
+    expect(value).to.equal("8");
+  });
+});

@@ -35,9 +35,9 @@ This recipe demonstrates how to create a simple word count sample using a map-re
 
 		gcloud alpha functions call mapr-reduce --data '{"bucket": "[PROJECT-ID]-gcf-recipes-bucket", "file": "sample.txt", "mapFunctionUrl": "https://[REGION].[PROJECT-ID].cloudfunctions.net/mapr-map"}'
 
-You can determine the region and URL of your function by using the *describe* command
+	You can determine the region and URL of your function by using the *describe* command
 
-	gcloud alpha functions describe mapr-map
+		gcloud alpha functions describe mapr-map
 		
 You should see something like this in your console
 ```

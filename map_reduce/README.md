@@ -25,11 +25,11 @@ This recipe demonstrates how to create a simple word count sample using a map-re
 
 5.	Deploy the "map" function with an HTTP trigger
 	
-		gcloud alpha functions deploy mapr-map --bucket [PROJECT-ID]-gcf-recipes-bucket --trigger-http
+		gcloud alpha functions deploy mapr-map --bucket [PROJECT-ID]-gcf-recipes-bucket --trigger-http --entry-point map
 
 6. 	Deploy the "reduce" function with an HTTP trigger
 
-		gcloud alpha functions deploy mapr-reduce --bucket [PROJECT-ID]-gcf-recipes-bucket --trigger-http
+		gcloud alpha functions deploy mapr-reduce --bucket [PROJECT-ID]-gcf-recipes-bucket --trigger-http --entry-point reduce
 		
 7. 	Call the "reduce" function using the sample file, and the URL of the "map" function arguments
 

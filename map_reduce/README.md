@@ -37,7 +37,7 @@ This recipe demonstrates how to create a simple word count sample using a map-re
 
 You can determine the region and URL of your function by using the *describe* command
 
-		gcloud alpha functions describe mapr-map
+	gcloud alpha functions describe mapr-map
 		
 You should see something like this in your console
 ```

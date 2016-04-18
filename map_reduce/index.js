@@ -17,13 +17,23 @@ var map = function (context, data) {
   if(key !== SHARED_KEY) {
     context.failure("Invalid key");
   } else {
-    console.log('Processing line');
-
     // We expect the data argument to contain a 'line' property
-    var line = data['line'];  
+    var batch = data['batch']; 
 
-    // Just split to count words
-    context.success(line.split(/\s+/).length + '');
+    // Batch should be an array 
+    var count = 0;
+    for(var i = 0; i < batch.length; i++) {
+      var line = batch[i];
+
+      console.log("Processing line [" + i + "] of [" + batch.length + "]");
+
+      // Just split to count words
+      count += line.split(/\s+/).length 
+    }
+
+    console.log("Total [" + count + "] words in batch of size [" + batch.length + "]")
+
+    context.success(count + '');
   }
 };
 
@@ -49,6 +59,7 @@ var reduce = function (context, data) {
   var inStream = bucket.file(data['file']).createReadStream();
 
   // use the readLine module to read the stream line-by line
+  console.log('Got stream, reading file line-by-line...');
   var lineReader = require('readline').createInterface({
     input: inStream
   });
@@ -56,18 +67,29 @@ var reduce = function (context, data) {
   // Create an array to hold our request promises
   var promises = [];
 
+  // We are going to batch the lines, we could use any number here
+  var batch = [];
+  var BATCH_SIZE = 3;
+
   lineReader.on('line', function (line) {
-    // You could batch the lines here to send more than one to each mapper
-    // but for simplicity we're just going to send each line
-    console.log('Sending line [' + line + '] to map function...');
-    promises.push(invoke(fnUrl, line, SHARED_KEY));
+    if(batch.length === BATCH_SIZE) {
+      // Send the batch
+      promises.push(invoke(fnUrl, batch, SHARED_KEY));
+      batch = [];
+    } 
+
+    batch.push(line.trim());
   });        
 
   lineReader.on('close', function () {
+
+    // We might have trailing lines in an incomplete batch
+    if(batch.length > 0) {
+      promises.push(invoke(fnUrl, batch, SHARED_KEY));
+    }
+
     Promise.all(promises).then(function(result) { 
-
-        console.log(result);
-
+        console.log('All mappers have returned');
         // The result will be an array of return values from the mappers
         var count = 0;
         for(var i = 0; i < result.length; ++i) {
@@ -82,13 +104,13 @@ var reduce = function (context, data) {
 };
 
 // Invokes another Cloud Function
-var invoke = function(url, line, key) {
+var invoke = function(url, batch, key) {
     // This will return a promise
     return req({
       method: 'POST',
       uri: url,
       body: {
-        'line': line,
+        'batch': batch,
         'key': key
       },
       headers: {

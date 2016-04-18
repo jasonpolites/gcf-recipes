@@ -12,7 +12,10 @@ module.exports = {
         context.failure("Filename not provided.  Make sure you have a 'file' property in your request");
       } else {
         // Create a gcs client
-        var gcs = gcloud.storage();   
+        var gcs = gcloud.storage({
+          // We're using the API from the same project as the Cloud Function
+          projectId: process.env.GCP_PROJECT,
+        });   
         var bucket = gcs.bucket(bucketName); 
         var file = bucket.file(fileName);
         var count = 0;

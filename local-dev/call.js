@@ -43,6 +43,7 @@ if(program.args.length === 0) {
 
       if(projectId) {
         process.env.GCLOUD_PROJECT = projectId;
+        process.env.GCP_PROJECT = projectId;
       }
 
       if(!data) {

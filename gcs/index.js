@@ -27,7 +27,7 @@ module.exports = {
         });  
 
         lineReader.on('close', function () {
-          context.success(count + '');
+          context.success("The file " + fileName + " has " + count + " words");          
         });  
       }
     }

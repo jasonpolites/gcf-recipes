@@ -26,7 +26,7 @@ module.exports = {
         });
 
         lineReader.on('line', function (line) {
-          count += line.split(/\s+/).length;
+          count += lin.trim().split(/\s+/).length;
         });  
 
         lineReader.on('close', function () {

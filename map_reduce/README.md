@@ -41,5 +41,5 @@ This recipe demonstrates how to create a simple word count sample using a map-re
 		
 You should see something like this in your console
 ```
-The file sample.txt has 119 words
+The file sample.txt has 114 words
 ```

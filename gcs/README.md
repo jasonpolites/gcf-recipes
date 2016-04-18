@@ -33,5 +33,5 @@ This recipe demonstrates how to load a file from Cloud Storage
 		
 You should see something like this in your console
 ```
-The file sample.txt has 119 words
+The file sample.txt has 114 words
 ```

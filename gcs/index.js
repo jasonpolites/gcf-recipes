@@ -12,20 +12,15 @@ module.exports = {
         context.failure("Filename not provided.  Make sure you have a 'file' property in your request");
       } else {
         // Create a gcs client
-        var gcs = gcloud.storage({
-          // We're using the API from the same project as the Cloud Function
-          projectId: process.env.GCP_PROJECT
-        });   
-
+        var gcs = gcloud.storage();   
         var bucket = gcs.bucket(bucketName); 
         var file = bucket.file(fileName);
         var count = 0;
 
         // use the readLine module to read the stream line-by line
         var lineReader = require('readline').createInterface({
-          input: file.createReadStream()
+          "input" : file.createReadStream()
         });
-
 
         lineReader.on('line', function (line) {
           count += line.split(/\s+/).length;

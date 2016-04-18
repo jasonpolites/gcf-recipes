@@ -56,6 +56,6 @@ if(program.args.length === 0) {
       console.error("No entry point (function) specified");
     }
   } catch (e) {
-    console.error("Failed to load module: " + program.args[0] + ".  Are you sure the path is correct? (relative to " + __dirname + ")\n\t↳ Nested error was:\n\t\t↳ " + e.message + ":" + e.code);
+    console.error("Failed to load module: " + program.args[0] + ".  Are you sure the path is correct? (relative to " + __dirname + ")\n↳ Nested error was:\n\t↳ " + e.stack);
   }
 }

@@ -19,10 +19,7 @@ module.exports = {
         console.log('Publishing message to topic ' + topicName);
         
         // Create a pubsub client
-        var pubsub = gcloud.pubsub({
-          // We're using the API from the same project as the Cloud Function
-          projectId: process.env.GCP_PROJECT,
-        });  
+        var pubsub = gcloud.pubsub();  
 
         // The Pub/Sub topic must already exist
         var topic = pubsub.topic(topicName);

@@ -20,10 +20,7 @@ var map = function (context, data) {
 var reduce = function (context, data) {
 
   // Create a gcs client
-  var gcs = gcloud.storage({
-    // We're using the API from the same project as the Cloud Function
-    projectId: process.env.GCP_PROJECT
-  });
+  var gcs = gcloud.storage();
 
   // Get the location (url) of the map function
   var fnUrl = data['mapFunctionUrl'];

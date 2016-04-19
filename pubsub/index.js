@@ -12,35 +12,38 @@ module.exports = {
 
     if(!topicName) {
       context.failure("Topic not provided.  Make sure you have a 'topic' property in your request");
-    } else {
-      if(!message) {
-        context.failure("Message not provided.  Make sure you have a 'message' property in your request");
-      } else {
-        console.log('Publishing message to topic ' + topicName);
-        
-        // Create a pubsub client
-        var pubsub = gcloud.pubsub({
-          // We're using the API from the same project as the Cloud Function
-          projectId: process.env.GCP_PROJECT,
-        });  
-
-        // The Pub/Sub topic must already exist
-        var topic = pubsub.topic(topicName);
-        
-        // Pub/Sub messages must be valid JSON objects
-        topic.publish({
-          data: {
-            'message': message
-          }
-        }, function(err) {
-          if(err) {
-            context.failure(err);
-          } else {
-            context.success();
-          }
-        });        
-      }
+      return;
     }
+    if(!message) {
+      context.failure("Message not provided.  Make sure you have a 'message' property in your request");
+      return;
+    }
+
+    console.log('Publishing message to topic ' + topicName);
+    
+    // Create a pubsub client
+    var pubsub = gcloud.pubsub({
+      // We're using the API from the same project as the Cloud Function
+      projectId: process.env.GCP_PROJECT,
+    });  
+
+    // The Pub/Sub topic must already exist
+    var topic = pubsub.topic(topicName);
+
+    // Pub/Sub messages must be valid JSON objects
+    topic.publish({
+      data: {
+        'message': message
+      }
+    }, function(err) {
+      if(err) {
+        context.failure(err);
+        return;
+      } else {
+        context.success();
+        return;
+      }
+    });        
   },
 
   /**

@@ -60,7 +60,12 @@ var reduce = function(context, data) {
   // Load the master file using the stream API
   console.log(
       'Opening file [' + data['file'] + '] and creating a read stream...');
-  var inStream = bucket.file(data['file']).createReadStream();
+  var inStream = bucket.file(data['file']).createReadStream()
+    .on('error', function(err) {
+      context.failure("Error reading file stream for " + data['file'] + ": " +
+        err.message);
+      return;
+    });
 
   // use the readLine module to read the stream line-by line
   console.log('Got stream, reading file line-by-line...');
@@ -106,6 +111,7 @@ var reduce = function(context, data) {
           context.failure(err);
         });
   });
+
 };
 
 

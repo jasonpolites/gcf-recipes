@@ -1,21 +1,21 @@
-var map_reduce = require ('../index.js');
+var mapReduce = require('../index.js');
 var expect = require('chai').expect;
 var sinon = require('sinon');
 var req = require('request-promise');
 
-describe('Map Reduce Tests', function () {
-  it("counts words in a line correctly", function() {
-    var line = "Shall I compare thee to a summer's day?";
+describe('Map Reduce Tests', function() {
+  it('counts words in a line correctly', function() {
+    var line = 'Shall I compare thee to a summer\'s day?';
     var data = {
-      "line": line
+      line: line,
     };
     var value;
     var context = {
-      "success" : function(val) {
+      success: function(val) {
         value = val;
-      }
+      },
     };
-    map_reduce.map(context, data);
-    expect(value).to.equal("8");
+    mapReduce.map(context, data);
+    expect(value).to.equal('8');
   });
 });

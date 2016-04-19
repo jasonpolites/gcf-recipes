@@ -1,50 +1,53 @@
-var gcloud = require("gcloud");
+var gcloud = require('gcloud');
 
-// Promise-compartible request module
+// Promise-compartible request module.
 var req = require('request-promise');
 
-// Use a simple shared key to assert calling authority
-var SHARED_KEY = "some_random_high_entropy_string"
+// Use a simple shared key to assert calling authority.
+var SHARED_KEY = 'some_random_high_entropy_string';
+
 
 /**
- * Counts the number of words in the line
+ * Counts the number of words in the line.
  */
-var map = function (context, data) {
+var map = function(context, data) {
 
   // Simple shared key to authorize the caller
   var key = data['key'];
-
-  if(key !== SHARED_KEY) {
-    context.failure("Invalid key");
-  } else {
-    // We expect the data argument to contain a 'line' property
-    var batch = data['batch']; 
-
-    // Batch should be an array 
-    var count = 0;
-    for(var i = 0; i < batch.length; i++) {
-      var line = batch[i];
-
-      console.log("Processing line [" + i + "] of [" + batch.length + "]");
-
-      // Just split to count words
-      count += line.split(/\s+/).length 
-    }
-
-    console.log("Total [" + count + "] words in batch of size [" + batch.length + "]")
-
-    context.success(count + '');
+  if (key !== SHARED_KEY) {
+    context.failure('Invalid key');
+    return;
   }
+
+  // We expect the data argument to contain a 'line' property.
+  var batch = data['batch'];
+
+  // Batch should be an array.
+  var count = 0;
+  for (var i = 0; i < batch.length; i++) {
+    var line = batch[i];
+
+    console.log('Processing line [' + i + '] of [' + batch.length + ']');
+
+    // Just split to count words.
+    count += line.split(/\s+/).length;
+  }
+
+  console.log(
+      'Total [' + count + '] words in batch of size [' + batch.length + ']');
+
+  context.success(count + '');
 };
 
+
 /**
- * Reads the source file and fans out to the mappers
+ * Reads the source file and fans out to the mappers.
  */
-var reduce = function (context, data) {
+var reduce = function(context, data) {
 
   // Create a gcs client
   var gcs = gcloud.storage({
-    // We're using the API from the same project as the Cloud Function
+    // We're using the API from the same project as the Cloud Function.
     projectId: process.env.GCP_PROJECT,
   });
 
@@ -55,14 +58,13 @@ var reduce = function (context, data) {
   var bucket = gcs.bucket(data['bucket']);
 
   // Load the master file using the stream API
-  console.log('Opening file [' + data['file'] + '] and creating a read stream...');
+  console.log(
+      'Opening file [' + data['file'] + '] and creating a read stream...');
   var inStream = bucket.file(data['file']).createReadStream();
 
   // use the readLine module to read the stream line-by line
   console.log('Got stream, reading file line-by-line...');
-  var lineReader = require('readline').createInterface({
-    input: inStream
-  });
+  var lineReader = require('readline').createInterface({input: inStream});
 
   // Create an array to hold our request promises
   var promises = [];
@@ -71,57 +73,64 @@ var reduce = function (context, data) {
   var batch = [];
   var BATCH_SIZE = 3;
 
-  lineReader.on('line', function (line) {
-    if(batch.length === BATCH_SIZE) {
-      // Send the batch
+  lineReader.on('line', function(line) {
+    if (batch.length === BATCH_SIZE) {
+      // Send the batch.
       promises.push(invoke(fnUrl, batch, SHARED_KEY));
       batch = [];
-    } 
+    }
 
     batch.push(line.trim());
-  });        
+  });
 
-  lineReader.on('close', function () {
+  lineReader.on('close', function() {
 
-    // We might have trailing lines in an incomplete batch
-    if(batch.length > 0) {
+    // We might have trailing lines in an incomplete batch.
+    if (batch.length > 0) {
       promises.push(invoke(fnUrl, batch, SHARED_KEY));
     }
 
-    Promise.all(promises).then(function(result) { 
-        console.log('All mappers have returned');
-        // The result will be an array of return values from the mappers
-        var count = 0;
-        for(var i = 0; i < result.length; ++i) {
-          count += parseInt(result[i]);
-        }
-        context.success("The file " + data['file'] + " has " + count + " words");
-    }, function(err) {
-        console.error("Error!")
-        context.failure(err);
-    });
-  });       
+    Promise.all(promises).then(
+        function(result) {
+          console.log('All mappers have returned');
+          // The result will be an array of return values from the mappers.
+          var count = 0;
+          for (var i = 0; i < result.length; ++i) {
+            count += parseInt(result[i]);
+          }
+          context.success(
+              'The file ' + data['file'] + ' has ' + count + ' words');
+        },
+        function(err) {
+          console.error('Error!');
+          context.failure(err);
+        });
+  });
 };
 
-// Invokes another Cloud Function
+
+/**
+ * Invokes another Cloud Function.
+ */
 var invoke = function(url, batch, key) {
-    // This will return a promise
-    return req({
-      method: 'POST',
-      uri: url,
-      body: {
-        'batch': batch,
-        'key': key
-      },
-      headers: {
-        "accept": "*/*"
-      },      
-      json: true
-    });
+  // This will return a promise
+  return req({
+    method: 'POST',
+    uri: url,
+    body: {
+      batch: batch,
+      key: key,
+    },
+    headers: {
+      accept: '*/*',
+    },
+    json: true,
+  });
 };
+
 
 module.exports = {
-  "map" : map,
-  "reduce" : reduce,
-  "invoke" : invoke
-}
+  map: map,
+  reduce: reduce,
+  invoke: invoke,
+};

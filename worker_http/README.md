@@ -10,13 +10,14 @@ Where applicable:
 
 ### What's going on here?
 
-![Distributed Worker (HTTP)](/images/readme.png "Distributed Worker (HTTP)")
+![Distributed Worker (HTTP)](images/readme.png "Distributed Worker (HTTP)")
 
-#	Client calls the "master" function via HTTP
-#	Master function pulls file from Google Cloud Storage
-#	Master function segments the file and fans out requests to multiple workers
-# Worker functions process each segment and report the result back to the master
-# Master function reduces the result and returns to the client
+1. 	Client calls the "master" function via HTTP
+2.	Master function pulls file from Google Cloud Storage
+3.	Master function segments the file and fans out requests to multiple workers
+4.	Worker functions process each segment and report the result back to the master
+5. 	Master function reduces all results from workers into a single result
+6. 	Matser function returns aggregate result to the client
 
 ### Cooking the Recipe
 1.	Follow the [Cloud Functions quickstart guide](https://cloud.google.com/functions/docs) to setup Cloud Functions for your project

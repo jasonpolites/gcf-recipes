@@ -2,9 +2,21 @@
 ## Word Count Sample
 
 ### Overview
-This recipe demonstrates how to create a simple word count sample using a map-reduce pattern.  Where applicable:
+This recipe demonstrates how to create a simple word count sample using a master-worker pattern using HTTP invocation.  
+
+Where applicable:
 
 **Replace [PROJECT-ID] with your Cloud Platform project ID**
+
+### What's going on here?
+
+![Distributed Worker (HTTP)](/images/readme.png "Distributed Worker (HTTP)")
+
+#	Client calls the "master" function via HTTP
+#	Master function pulls file from Google Cloud Storage
+#	Master function segments the file and fans out requests to multiple workers
+# Worker functions process each segment and report the result back to the master
+# Master function reduces the result and returns to the client
 
 ### Cooking the Recipe
 1.	Follow the [Cloud Functions quickstart guide](https://cloud.google.com/functions/docs) to setup Cloud Functions for your project
@@ -13,7 +25,7 @@ This recipe demonstrates how to create a simple word count sample using a map-re
 
 		cd ~/
 		git clone https://github.com/jasonpolites/gcf-recipes.git
-		cd gcf-recipes/map_reduce
+		cd gcf-recipes/worker_http
 		
 4. 	Create a Cloud Storage Bucket to stage our deployment
 

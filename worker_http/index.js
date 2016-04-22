@@ -6,7 +6,6 @@ var req = require('request-promise');
 // Use a simple shared key to assert calling authority.
 var SHARED_KEY = 'some_random_high_entropy_string';
 
-
 /**
  * Counts the number of words in the line.
  */
@@ -26,8 +25,6 @@ var map = function(context, data) {
   var count = 0;
   for (var i = 0; i < batch.length; i++) {
     var line = batch[i];
-
-    console.log('Processing line [' + i + '] of [' + batch.length + ']');
 
     // Just split to count words.
     count += line.split(/\s+/).length;
@@ -111,7 +108,6 @@ var reduce = function(context, data) {
           context.failure(err);
         });
   });
-
 };
 
 

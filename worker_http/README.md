@@ -17,7 +17,7 @@ Where applicable:
 3.	Master function segments the file and fans out requests to multiple workers
 4.	Worker functions process each segment and report the result back to the master
 5. 	Master function reduces all results from workers into a single result
-6. 	Matser function returns aggregate result to the client
+6. 	Master function returns aggregate result to the client
 
 ### Cooking the Recipe
 1.	Follow the [Cloud Functions quickstart guide](https://cloud.google.com/functions/docs) to setup Cloud Functions for your project

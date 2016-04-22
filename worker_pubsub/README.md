@@ -4,7 +4,20 @@
 ### Overview
 This recipe demonstrates how to create a simple word count sample using a master-worker pattern using Cloud Pub/Sub.  
 
+Where applicable:
+
 **Replace [PROJECT-ID] with your Cloud Platform project ID**
+
+### What's going on here?
+
+![Distributed Worker (Pub/Sub)](images/readme.png "Distributed Worker (Pub/Sub)")
+
+1. 	Client calls the "master" function via HTTP
+2.	Master function pulls file from Google Cloud Storage
+3.	Master function segments the file and published mutliple messages to the "In Topic"
+4.	Cloud Functions allocates multiple workers (as necessary) to process segment messages and workers publish results to "Out Topic"
+5. 	Master function subscribes to "Out Topic" and collects results from workers
+6. 	Master function returns aggregate result to the client
 
 ### Cooking the Recipe
 1.	Follow the [Cloud Functions quickstart guide](https://cloud.google.com/functions/docs) to setup Cloud Functions for your project

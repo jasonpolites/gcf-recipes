@@ -36,21 +36,21 @@ Where applicable:
 
 		gsutil cp sample.txt gs://[PROJECT-ID]-gcf-recipes-bucket
 
-5.	Deploy the "map" function with an HTTP trigger
+5.	Deploy the "worker" function with an HTTP trigger
 	
-		gcloud alpha functions deploy mapr-map --bucket [PROJECT-ID]-gcf-recipes-bucket --trigger-http --entry-point map
+		gcloud alpha functions deploy mapr-worker --bucket [PROJECT-ID]-gcf-recipes-bucket --trigger-http --entry-point worker
 
-6. 	Deploy the "reduce" function with an HTTP trigger
+6. 	Deploy the "master" function with an HTTP trigger
 
-		gcloud alpha functions deploy mapr-reduce --bucket [PROJECT-ID]-gcf-recipes-bucket --trigger-http --entry-point reduce
+		gcloud alpha functions deploy mapr-master --bucket [PROJECT-ID]-gcf-recipes-bucket --trigger-http --entry-point master
 		
-7. 	Call the "reduce" function using the sample file, and the URL of the "map" function arguments
+7. 	Call the "master" function using the sample file, and the URL of the "worker" function as arguments
 
-		gcloud alpha functions call mapr-reduce --data '{"bucket": "[PROJECT-ID]-gcf-recipes-bucket", "file": "sample.txt", "mapFunctionUrl": "https://[REGION].[PROJECT-ID].cloudfunctions.net/mapr-map"}'
+		gcloud alpha functions call mapr-master --data '{"bucket": "[PROJECT-ID]-gcf-recipes-bucket", "file": "sample.txt", "workerFunctionUrl": "https://[REGION].[PROJECT-ID].cloudfunctions.net/mapr-worker"}'
 
 	You can determine the region and URL of your function by using the *describe* command
 
-		gcloud alpha functions describe mapr-map
+		gcloud alpha functions describe mapr-worker
 		
 You should see something like this in your console
 ```

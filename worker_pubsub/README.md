@@ -44,17 +44,17 @@ Where applicable:
 
 		gcloud alpha pubsub topics create gcf-mapr-out		
 
-6. 	Deploy the "reduce" function with an HTTP trigger
+6. 	Deploy the "master" function with an HTTP trigger
 	
-		gcloud alpha functions deploy mapr-pubsub-reduce --bucket [PROJECT-ID]-gcf-recipes-bucket --trigger-http --entry-point reduce
+		gcloud alpha functions deploy mapr-pubsub-master --bucket [PROJECT-ID]-gcf-recipes-bucket --trigger-http --entry-point master
 
-6. 	Deploy the "map" function with a Pub/Sub trigger, using the 'gcf-mapr-in' topic as the source
+6. 	Deploy the "worker" function with a Pub/Sub trigger, using the 'gcf-mapr-in' topic as the source
 
-		gcloud alpha functions deploy mapr-pubsub-map --bucket [PROJECT-ID]-gcf-recipes-bucket --trigger-topic gcf-mapr-in --entry-point map
+		gcloud alpha functions deploy mapr-pubsub-worker --bucket [PROJECT-ID]-gcf-recipes-bucket --trigger-topic gcf-mapr-in --entry-point worker
 		
-7. 	Call the "reduce" function using the sample file, with both topics as function arguments
+7. 	Call the "master" function using the sample file, with both topics as function arguments
 
-		gcloud alpha functions call mapr-pubsub-reduce --data '{"bucket": "[PROJECT-ID]-gcf-recipes-bucket", "file": "sample.txt", "in-topic": "gcf-mapr-in", "out-topic":"gcf-mapr-out"}'
+		gcloud alpha functions call mapr-pubsub-master --data '{"bucket": "[PROJECT-ID]-gcf-recipes-bucket", "file": "sample.txt", "in-topic": "gcf-mapr-in", "out-topic":"gcf-mapr-out"}'
 		
 You should see something like this in your console
 ```

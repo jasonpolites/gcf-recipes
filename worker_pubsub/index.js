@@ -3,7 +3,7 @@ var gcloud = require('gcloud');
 /**
  * Counts the number of words in the line.
  */
-var map = function(context, data) {
+var worker = function(context, data) {
 
   // We expect the data argument to contain a 'line' property.
   var batch = data['batch'];
@@ -43,9 +43,9 @@ var map = function(context, data) {
 
 
 /**
- * Reads the source file and fans out to the mappers.
+ * Reads the source file and fans out to the workers.
  */
-var reduce = function(context, data) {
+var master = function(context, data) {
 
   // Create a gcs client
   var gcs = gcloud.storage({
@@ -53,14 +53,11 @@ var reduce = function(context, data) {
     projectId: process.env.GCP_PROJECT,
   });
 
-  // Create a pubsub client to publish the work and read the results of the mappers
+  // Create a pubsub client to publish the work and read the results of the workers
   var pubsub = gcloud.pubsub({
     // We're using the API from the same project as the Cloud Function.
     projectId: process.env.GCP_PROJECT,
   });
-
-  // Get the location (url) of the map function
-  var fnUrl = data['mapFunctionUrl'];
 
   // Get the bucket containing our source file
   var bucket = gcs.bucket(data['bucket']);
@@ -144,7 +141,7 @@ var reduce = function(context, data) {
       autoAck:true,
       reuseExisting: true 
     };
-    
+
     outTopic.subscribe('mapr-pubsub-subscription', options, function(err, subscription) {
 
       if(err) {
@@ -195,6 +192,6 @@ var reduce = function(context, data) {
 
 
 module.exports = {
-  map: map,
-  reduce: reduce
+  worker: worker,
+  master: master
 };

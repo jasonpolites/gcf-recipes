@@ -9,7 +9,7 @@ var SHARED_KEY = 'some_random_high_entropy_string';
 /**
  * Counts the number of words in the line.
  */
-var map = function(context, data) {
+var worker = function(context, data) {
 
   // Simple shared key to authorize the caller
   var key = data['key'];
@@ -40,7 +40,7 @@ var map = function(context, data) {
 /**
  * Reads the source file and fans out to the mappers.
  */
-var reduce = function(context, data) {
+var master = function(context, data) {
 
   // Create a gcs client
   var gcs = gcloud.storage({
@@ -49,7 +49,7 @@ var reduce = function(context, data) {
   });
 
   // Get the location (url) of the map function
-  var fnUrl = data['mapFunctionUrl'];
+  var fnUrl = data['workerFunctionUrl'];
 
   // Get the bucket containing our source file
   var bucket = gcs.bucket(data['bucket']);
@@ -94,8 +94,8 @@ var reduce = function(context, data) {
 
     Promise.all(promises).then(
         function(result) {
-          console.log('All mappers have returned');
-          // The result will be an array of return values from the mappers.
+          console.log('All workers have returned');
+          // The result will be an array of return values from the workers.
           var count = 0;
           for (var i = 0; i < result.length; ++i) {
             count += parseInt(result[i]);
@@ -132,7 +132,7 @@ var invoke = function(url, batch, key) {
 
 
 module.exports = {
-  map: map,
-  reduce: reduce,
+  worker: worker,
+  master: master,
   invoke: invoke,
 };

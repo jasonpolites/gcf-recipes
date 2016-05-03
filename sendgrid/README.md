@@ -17,11 +17,11 @@ This recipe shows you how to send an email from a Cloud Function using SendGrid.
 		
 3.	Create an account on Sendgrid.  You can either do this manually via the [SendGrid website](https://sendgrid.com/free), or you can use the [Google Cloud Launcher](https://cloud.google.com/launcher) which will create an account for you and also integrate billing
 
-[Create a SendGrid account using Cloud Launcher](https://cloud.google.com/launcher/solution/sendgrid-app/sendgrid-email)
+	[Create a SendGrid account using Cloud Launcher](https://cloud.google.com/launcher/solution/sendgrid-app/sendgrid-email)
 
 4. 	Create SendGrid API key
 
-		-	Log in to your SendGrid account at https://app.sendgrid.com
+		- Log in to your SendGrid account at https://app.sendgrid.com
 		- Navigate to Settings->API Keys
 		- Create a new "General API Key"
 		- Ensure you select (at least) the "Mail Send" permission when you create the API key
@@ -35,7 +35,9 @@ This recipe shows you how to send an email from a Cloud Function using SendGrid.
 	
 		gcloud alpha functions deploy sendEmail --bucket [PROJECT-ID]-gcf-recipes-bucket --trigger-http
 
-8. 	Call the "sendEmail" function (replace SENDGRID_KEY with your SendGrid API KEY, RECIPIENT_ADDR with the recipient's email address, and SENDER_ADDR with your SendGrid account's email address)
+8. 	Call the "sendEmail" function 
+	
+	(replace SENDGRID_KEY with your SendGrid API KEY, RECIPIENT_ADDR with the recipient's email address, and SENDER_ADDR with your SendGrid account's email address)
 
 		gcloud alpha functions call sendEmail --data '{"sg_key": "[SENDGRID_KEY]", "to": "[RECIPIENT_ADDR]", "from": "[SENDER_ADDR]", "subject": "Hello from Sendgrid!", "body": "Hello World!"}' 
 		

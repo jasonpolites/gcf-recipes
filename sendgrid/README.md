@@ -21,7 +21,7 @@ This recipe shows you how to send an email from a Cloud Function using SendGrid.
 
 4. 	Create SendGrid API key
 
-		- Log in to your SendGrid account at https://app.sendgrid.com
+		- Log in to your SendGrid account at [https://app.sendgrid.com](https://app.sendgrid.com)
 		- Navigate to Settings->API Keys
 		- Create a new "General API Key"
 		- Ensure you select (at least) the "Mail Send" permission when you create the API key

@@ -8,6 +8,7 @@
 *Coming Soon...*
 
  - Processing Cloud Logging events
+ - Accessing Cloud Datastore
  - Exporting data to Cloud BigQuery
  - Responding to Google Drive events
  - Processing GMail events

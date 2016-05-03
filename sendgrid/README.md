@@ -36,12 +36,9 @@ This recipe shows you how to send an email from a Cloud Function using SendGrid.
 		gcloud alpha functions deploy sendEmail --bucket [PROJECT-ID]-gcf-recipes-bucket --trigger-http
 
 8. 	Call the "sendEmail" function, remembering to:
-	
 	- Replace **SENDGRID_KEY** with your SendGrid API KEY
 	- Replace **RECIPIENT_ADDR** with the recipient's email address
 	- Replace **SENDER_ADDR** with your SendGrid account's email address
-
-		gcloud alpha functions call sendEmail --data '{"sg_key": "[SENDGRID_KEY]", "to": "[RECIPIENT_ADDR]", "from": "[SENDER_ADDR]", "subject": "Hello from Sendgrid!", "body": "Hello World!"}' 
 		
 9.	Check the logs for the "sendEmail" function
 

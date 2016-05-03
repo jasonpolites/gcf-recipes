@@ -1,5 +1,5 @@
 # Google Cloud Functions Recipes
-## Sending email with Twilio
+## Sending SMS messages with Twilio
 
 ### Overview
 This recipe shows you how to send an SMS message from a Cloud Function using Twilio.  Where applicable:

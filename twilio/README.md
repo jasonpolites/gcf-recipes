@@ -1,8 +1,8 @@
 # Google Cloud Functions Recipes
-## Sending email with SendGrid
+## Sending email with Twilio
 
 ### Overview
-This recipe shows you how to send an email from a Cloud Function using SendGrid.  Where applicable:
+This recipe shows you how to send an SMS message from a Cloud Function using Twilio.  Where applicable:
 
 **Replace [PROJECT-ID] with your Cloud Platform project ID**
 

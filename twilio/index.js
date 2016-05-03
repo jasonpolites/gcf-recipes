@@ -16,10 +16,10 @@ module.exports = {
     }, function(err, message) {
       if(err) {
         console.log(err);
-        contex.failure(err);
+        context.failure(err);
       } else {
         console.log(message);
-        contex.success(message);
+        context.success(message);
       }
     });
   }

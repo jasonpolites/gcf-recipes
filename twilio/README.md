@@ -19,6 +19,8 @@ This recipe shows you how to send an SMS message from a Cloud Function using Twi
 
 4. 	Grab your Twilio Account SID & Auth Token.  These will be visible in your [Twilio Console](https://www.twilio.com/console)
 
+5.	Create a [Twilio Number](https://www.twilio.com/user/account/phone-numbers/getting-started) to use as the sender number
+
 5. 	Create a Cloud Storage Bucket to stage our deployment
 
 		gsutil mb gs://[PROJECT-ID]-gcf-recipes-bucket
@@ -29,11 +31,11 @@ This recipe shows you how to send an SMS message from a Cloud Function using Twi
 
 8. 	Call the "sendSms" function:
 		
-		gcloud alpha functions call sendSms --data '{"account_sid": "[TWILIO_SID]", "auth_token": "[TWILIO_TOKEN]", "from": "[FROM_NUM]", "to": "[TO_NUM]" "message": "Hello from Cloud Functions!"}' 
+		gcloud alpha functions call sendSms --data '{"account_sid": "[TWILIO_SID]", "auth_token": "[TWILIO_TOKEN]", "from": "[FROM_NUM]", "to": "[TO_NUM]", "message": "Hello from Cloud Functions!"}' 
 
 	- Replace **TWILIO_SID** with your Twilio Account SID
 	- Replace **TWILIO_TOKEN** with the Twilio Auth Token
-	- Replace **FROM_NUM** with your (verfied) sender phone number (in international format, e.g +14151112222)
+	- Replace **FROM_NUM** with your Twilio Number (in international format, e.g +14151112222)
 	- Replace **TO_NUM** with your recipient number (in international format, e.g +14151112222)
 		
 9.	Check the logs for the "sendSms" function

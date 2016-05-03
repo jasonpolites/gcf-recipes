@@ -38,7 +38,7 @@ This recipe shows you how to send an SMS message from a Cloud Function using Twi
 		
 9.	Check the logs for the "sendSms" function
 
-		gcloud alpha functions get-logs sendEmail
+		gcloud alpha functions get-logs sendSms
 	
 You should see something like this in your console
 ```

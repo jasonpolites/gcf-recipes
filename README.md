@@ -5,6 +5,7 @@
  - [Word Count Master/Worker](/worker_http) example using HTTP Invocation
  - [Word Count Master/Worker](/worker_pubsub) example using Cloud Pub/Sub
  - [Sending email](/sendgrid) with SendGrid
+ - [Sending SMS](/twilio) messages with Twilio
 
 *Coming Soon...*
 
@@ -17,6 +18,5 @@
   - Using HTTP Basic Authentication
   - Using a simple shared key
   - Validating JSON Web Tokens (JWTs)
- - Sending SMS messages with Twilio
  - Sending messages to a Slack channel
  - Making payments with Stripe

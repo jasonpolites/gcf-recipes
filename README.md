@@ -4,3 +4,19 @@
  - Reading from a [Google Cloud Storage](/gcs) Bucket
  - [Word Count Master/Worker](/worker_http) example using HTTP Invocation
  - [Word Count Master/Worker](/worker_pubsub) example using Cloud Pub/Sub
+
+*Coming Soon...*
+
+ - Processing Cloud Logging events
+ - Accessing Cloud Datastore
+ - Exporting data to Cloud BigQuery
+ - Responding to Google Drive events
+ - Processing GMail events
+ - Authentication
+  - Using HTTP Basic Authentication
+  - Using a simple shared key
+  - Validating JSON Web Tokens (JWTs)
+ - Sending email with Sendgrid
+ - Sending SMS messages with Twilio
+ - Sending messages to a Slack channel
+ - Making payments with Stripe

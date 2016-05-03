@@ -4,6 +4,7 @@
  - Reading from a [Google Cloud Storage](/gcs) Bucket
  - [Word Count Master/Worker](/worker_http) example using HTTP Invocation
  - [Word Count Master/Worker](/worker_pubsub) example using Cloud Pub/Sub
+ - [Sending email](/sendgrid) with SendGrid
 
 *Coming Soon...*
 
@@ -16,7 +17,6 @@
   - Using HTTP Basic Authentication
   - Using a simple shared key
   - Validating JSON Web Tokens (JWTs)
- - Sending email with Sendgrid
  - Sending SMS messages with Twilio
  - Sending messages to a Slack channel
  - Making payments with Stripe

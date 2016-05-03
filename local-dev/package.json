@@ -11,7 +11,6 @@
     "functions"
   ],
   "author": "Jason Polites",
-  "license": "ISC",
   "dependencies": {
     "commander": "^2.9.0"
   }

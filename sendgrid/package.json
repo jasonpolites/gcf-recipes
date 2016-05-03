@@ -1,7 +1,7 @@
 {
-  "name": "gcf-recipe-pubsub",
+  "name": "gcf-recipe-sendgrid",
   "version": "1.0.0",
-  "description": "Google Cloud Functions Recipes - Cloud Pub/Sub",
+  "description": "Google Cloud Functions Recipes - Sendgrid",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,10 +11,10 @@
     "functions",
     "gcp",
     "gcf",
-    "pubsub"
+    "sendgrid"
   ],
   "author": "Jason Polites",
   "dependencies": {
-    "gcloud": "^0.30.2"
+    "sendgrid": "^1.9.2"
   }
 }

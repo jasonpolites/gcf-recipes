@@ -1,7 +1,7 @@
 {
-  "name": "gcf-recipe-sendgrid",
+  "name": "gcf-recipe-twilio",
   "version": "1.0.0",
-  "description": "Google Cloud Functions Recipes - SendGrid",
+  "description": "Google Cloud Functions Recipes - Twilio",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,10 +11,10 @@
     "functions",
     "gcp",
     "gcf",
-    "sendgrid"
+    "twilio"
   ],
   "author": "Jason Polites",
   "dependencies": {
-    "sendgrid": "^1.9.2"
+    "twilio": "^2.9.1"
   }
 }

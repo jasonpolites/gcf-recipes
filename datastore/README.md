@@ -21,7 +21,7 @@ This recipe shows you how to read and write an entity in Datastore from a Cloud 
 
 4.	Ensure the Cloud Datastore API is enabled
 
-		[Enable Cloud Datastore API](https://console.cloud.google.com/flows/enableapi?apiid=datastore.googleapis.com&redirect=https://github.com/jasonpolites/gcf-recipes/tree/master/datastore)
+	[Click here to enable the Cloud Datastore API](https://console.cloud.google.com/flows/enableapi?apiid=datastore.googleapis.com&redirect=https://github.com/jasonpolites/gcf-recipes/tree/master/datastore)
 
 4.	Deploy the "ds-get" function with an HTTP trigger
 	

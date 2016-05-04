@@ -1,4 +1,4 @@
-# Google Cloud Functions Recipes
+# Google Cloud Functions Recipes (Unofficial)
 
  - Publishing messages to [Google Cloud Pub/Sub](/pubsub)
  - Reading from a [Google Cloud Storage](/gcs) Bucket

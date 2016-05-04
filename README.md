@@ -6,11 +6,11 @@
  - [Word Count Master/Worker](/worker_pubsub) example using Cloud Pub/Sub
  - [Sending email](/sendgrid) with SendGrid
  - [Sending SMS](/twilio) messages with Twilio
+ - Reading and Writing with [Google Cloud Datastore](/datastore)
 
 *Coming Soon...*
 
  - Processing Cloud Logging events
- - Accessing Cloud Datastore
  - Exporting data to Cloud BigQuery
  - Responding to Google Drive events
  - Processing GMail events

@@ -20,7 +20,7 @@ Where applicable:
 6. 	Master function returns aggregate result to the client
 
 ### Cooking the Recipe
-1.	Follow the [Cloud Functions quickstart guide](https://cloud.google.com/functions/docs) to setup Cloud Functions for your project
+1.	Follow the [Cloud Functions quickstart guide](https://cloud.google.com/functions/quickstart) to setup Cloud Functions for your project
 
 2.	Clone this repository
 

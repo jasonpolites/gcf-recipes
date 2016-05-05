@@ -20,23 +20,23 @@ var worker = function(context, data) {
   var pubsub = gcloud.pubsub({
     // We're using the API from the same project as the Cloud Function.
     projectId: process.env.GCP_PROJECT,
-  });  
+  });
 
   var outTopic = pubsub.topic(data['out-topic']);
 
-  console.log('Worker ' + data['worker'] + ' reporting total count of ' + 
-    count + ' in batch of size [' + batch.length + ']')
+  console.log('Worker ' + data['worker'] + ' reporting total count of ' +
+      count + ' in batch of size [' + batch.length + ']');
 
   outTopic.publish({
     data: {
-      'count': count,
-      'worker': data['worker']
+      count: count,
+      worker: data['worker']
     }
   }, function(err) {
-    if(err) {
+    if (err) {
       context.failure(err);
       return;
-    } 
+    }
     context.success(count + '');
   });
 };
@@ -52,7 +52,7 @@ var master = function(context, data) {
     projectId: process.env.GCP_PROJECT,
   });
 
-  // Create a pubsub client to publish the work and read the results of the workers
+  // Create a pubsub client to publish the work and read the results of the workers.
   var pubsub = gcloud.pubsub({
     // We're using the API from the same project as the Cloud Function.
     projectId: process.env.GCP_PROJECT,
@@ -69,11 +69,11 @@ var master = function(context, data) {
 
   // Load the master file using the stream API
   var inStream = bucket.file(data['file']).createReadStream()
-    .on('error', function(err) {
-      context.failure("Error reading file stream for " + data['file'] + ": " +
-        err.message);
-      return;
-    });
+      .on('error', function(err) {
+        context.failure('Error reading file stream for ' + data['file'] + ': ' +
+            err.message);
+        return;
+      });
 
   // use the readLine module to read the stream line-by line
   var lineReader = require('readline').createInterface({input: inStream});
@@ -90,16 +90,16 @@ var master = function(context, data) {
   lineReader.on('line', function(line) {
     if (batch.length === BATCH_SIZE) {
       // Send the batch.
-      console.log("Sending batch of " + batch.length + " lines to worker worker" + workerId);
+      console.log('Sending batch of ' + batch.length + ' lines to worker worker' + workerId);
 
       inTopic.publish({
         data: {
           'batch': batch,
           'out-topic': data['out-topic'],
-          'worker' : 'worker' + (workerId++)
+          'worker': 'worker' + (workerId++)
         }
       }, function(err) {
-        if(err) {
+        if (err) {
           context.failure(err);
           return;
         }
@@ -117,38 +117,38 @@ var master = function(context, data) {
 
     // We might have trailing lines in an incomplete batch.
     if (batch.length > 0) {
-      console.log("Sending batch of " + batch.length + " lines to worker worker" + workerId);
+      console.log('Sending batch of ' + batch.length + ' lines to worker worker' + workerId);
 
       inTopic.publish({
         data: {
           'batch': batch,
           'out-topic': data['out-topic'],
-          'worker' : 'worker' + (workerId++)
+          'worker': 'worker' + (workerId++)
         }
       }, function(err) {
-        if(err) {
+        if (err) {
           context.failure(err);
           return;
         }
-      }); 
+      });
 
-      batchCount++;     
+      batchCount++;
     }
 
     // Subscribe to the out topic and wait for results
     var options = {
-      autoAck:true,
-      reuseExisting: true 
+      autoAck: true,
+      reuseExisting: true
     };
 
     outTopic.subscribe('mapr-pubsub-subscription', options, function(err, subscription) {
 
-      if(err) {
+      if (err) {
         console.error(err);
         context.failure(err);
         return;
       }
-      
+
       var count = 0;
 
       // Track returned workers to avoid duplicates
@@ -157,20 +157,20 @@ var master = function(context, data) {
       var onError = function(err) {
         context.failure(err);
         return;
-      }
+      };
 
       var onMessage = function(message) {
 
         var worker = message['data']['worker'];
 
-        console.log("Got count of " + message['data']['count'] + " from worker " + worker);
+        console.log('Got count of ' + message['data']['count'] + ' from worker ' + worker);
 
-        if(returned[worker] !== true) {
+        if (returned[worker] !== true) {
           batchCount--;
           returned[worker] = true;
           count += parseInt(message['data']['count']);
 
-          if(batchCount === 0) {
+          if (batchCount === 0) {
             // Remove listeners to stop pulling for messages.
             subscription.removeListener('message', onMessage);
             subscription.removeListener('error', onError);
@@ -178,13 +178,13 @@ var master = function(context, data) {
                 'The file ' + data['file'] + ' has ' + count + ' words');
           }
         } else {
-          console.log("Recieved duplicate result from worker " + worker);
+          console.log('Recieved duplicate result from worker ' + worker);
         }
-      }
+      };
 
       // Register listeners to start pulling for messages.
       subscription.on('error', onError);
-      subscription.on('message', onMessage);      
+      subscription.on('message', onMessage);
     });
   });
 };

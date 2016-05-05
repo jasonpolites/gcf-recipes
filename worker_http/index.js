@@ -6,6 +6,7 @@ var req = require('request-promise');
 // Use a simple shared key to assert calling authority.
 var SHARED_KEY = 'some_random_high_entropy_string';
 
+
 /**
  * Counts the number of words in the line.
  */
@@ -58,11 +59,10 @@ var master = function(context, data) {
   console.log(
       'Opening file [' + data['file'] + '] and creating a read stream...');
   var inStream = bucket.file(data['file']).createReadStream()
-    .on('error', function(err) {
-      context.failure("Error reading file stream for " + data['file'] + ": " +
-        err.message);
-      return;
-    });
+      .on('error', function(err) {
+        context.failure('Error reading file stream for ' + data['file'] + ': ' + err.message);
+        return;
+      });
 
   // use the readLine module to read the stream line-by line
   console.log('Got stream, reading file line-by-line...');

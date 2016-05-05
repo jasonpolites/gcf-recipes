@@ -41,7 +41,6 @@ var worker = function(context, data) {
   });
 };
 
-
 /**
  * Reads the source file and fans out to the workers.
  */

@@ -24,6 +24,7 @@ module.exports = {
       // We're using the API from the same project as the Cloud Function.
       projectId: process.env.GCP_PROJECT,
     });
+    
     var bucket = gcs.bucket(bucketName);
     var file = bucket.file(fileName);
     var count = 0;

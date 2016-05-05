@@ -16,16 +16,16 @@ var set = function(context, data) {
     return;
   }
 
-  _getKeyFromData(data, function(k, err) {
+  _getKeyFromData(data, function(err, k) {
     if(err) {
-      console.log(err);
+      console.error(err);
       context.failure(err);
       return;
     }
 
     _saveEntity(k, value, function(err) {
       if(err) {
-        console.log(err);
+        console.error(err);
         context.failure(err);
       } else {
         context.success('Entity saved');
@@ -36,9 +36,9 @@ var set = function(context, data) {
 
 var get = function(context, data) {
 
-  _getEntity(data, function(dsKey, entity, err) {
+  _getEntity(data, function(err, dsKey, entity) {
     if(err) {
-      console.log(err);
+      console.error(err);
       context.failure(err);
       return;
     } 
@@ -53,9 +53,9 @@ var get = function(context, data) {
 }
 
 var del = function(context, data) {
-  _getKeyFromData(data, function(k, err) {
+  _getKeyFromData(data, function(err, k) {
     if(err) {
-      console.log(err);
+      console.error(err);
       context.failure(err);
       return;
     } 
@@ -63,7 +63,7 @@ var del = function(context, data) {
     var ds = _getDSClient();      
     ds.delete(k, function(err, apiResp) {
       if(err) {
-        console.log(err);
+        console.error(err);
         context.failure(err);
       } else {
         context.success('Entity deleted');
@@ -79,43 +79,40 @@ var _getKeyFromData = function(data, callback) {
   var kind = data['kind'];
 
   if (!key) {
-    callback(null,
-        'Key not provided. Make sure you have a \'key\' property in ' +
+    callback('Key not provided. Make sure you have a \'key\' property in ' +
         'your request');
     return;
   }
 
   if (!kind) {
-    callback(null,
-        'Kind not provided. Make sure you have a \'kind\' property in ' +
+    callback('Kind not provided. Make sure you have a \'kind\' property in ' +
         'your request');
     return;
   }  
 
   var ds = _getDSClient();
 
-  callback(ds.key([kind, key]), null);    
+  callback(null, ds.key([kind, key]));    
 }
 
 // Gets a Datastore entity based on the key information in the request and 
 // returns null if the entity does not exist
 var _getEntity = function(data, callback) {
 
-  _getKeyFromData(data, function(k, err) {
+  _getKeyFromData(data, function(err, k) {
     if(err) {
-      console.log(err);
-      callback(null, null, err);
+      callback(err);
       return;
     } 
   
     var ds = _getDSClient();      
     ds.get(k, function(err, entity) {
       if(entity) {
-        callback(k, entity, null);
+        callback(null, k, entity);
       } else if(err) {
-        callback(null, null, err);
+        callback(err);
       } else {
-        callback(k, null, null);
+        callback(null, k);
       }
     });
   });

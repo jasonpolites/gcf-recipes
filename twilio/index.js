@@ -15,7 +15,7 @@ module.exports = {
         from: data['from']
     }, function(err, message) {
       if(err) {
-        console.log(err);
+        console.error(err);
         context.failure(err);
       } else {
         console.log(message);

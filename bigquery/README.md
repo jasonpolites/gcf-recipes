@@ -23,7 +23,7 @@ This recipe demonstrates using Cloud Functions to import data into Bigquery in r
 
 		gsutil mb gs://[PROJECT-ID]-bq-in
 
-5. 	Create a Cloud Storage Bucket to house processed files.  This is the bucket we will move files to when they are imported.  This should match the bucket name in config.js
+5. 	Create a Cloud Storage Bucket to house processed files.  This is the bucket we will move files to when they are imported.  This should match the bucket name in [config.js](config.js)
 
 		gsutil mb gs://[PROJECT-ID]-bq-processed
 

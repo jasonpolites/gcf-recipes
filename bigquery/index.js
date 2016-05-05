@@ -98,7 +98,7 @@ var _sendToBigQuery = function(gcsFile, callback) {
         } 
 
         console.log('Data import job created');
-        console.log(apiResponse);
+        // console.log(apiResponse);
 
         // Wait for the import job to complete
         // This is optional.  If you don't care about blocking while data is 
@@ -120,7 +120,7 @@ var _waitForJobCompletion = function(job, timeout, callback) {
 
   function checkJobStatus() {
 
-    console.log('Checking status of bigquery job ' + job.id);
+    // console.log('Checking status of bigquery job ' + job.id);
 
     job.getMetadata(function(err, apiResponse) {
       if (err) {
@@ -128,7 +128,7 @@ var _waitForJobCompletion = function(job, timeout, callback) {
         return;
       }
 
-      console.log('Bigquery job ' + job.id + ' has status of ' + apiResponse.status.state);
+      // console.log('Bigquery job ' + job.id + ' has status of ' + apiResponse.status.state);
 
       if (apiResponse.status.state !== 'DONE') {
 

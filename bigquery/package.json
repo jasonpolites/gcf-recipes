@@ -1,7 +1,7 @@
 {
-  "name": "gcf-recipe-pubsub",
+  "name": "gcf-recipe-bigquery",
   "version": "1.0.0",
-  "description": "Google Cloud Functions Recipes - Cloud Pub/Sub",
+  "description": "Google Cloud Functions Recipes - Cloud Bigquery",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,7 +11,7 @@
     "functions",
     "gcp",
     "gcf",
-    "pubsub"
+    "bigquery"
   ],
   "author": "Jason Polites",
   "dependencies": {

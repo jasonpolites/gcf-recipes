@@ -43,7 +43,7 @@ You should see something like this in your console
 ```
 I ... onFileArrived triggered
 I ... Sending file dc-wikia-data.csv to Bigquery...
-I ... Importing data from dc-wikia-data.csv into bq_dataset/bq_table...
+I ... Importing data from dc-wikia-data.csv into gcf_bq_dataset/gcf_bq_table...
 I ... Data import job created
 I ... File imported successfully, marking as done...
 I ... File marked as done.  Function complete.
@@ -51,7 +51,7 @@ I ... File marked as done.  Function complete.
 
 9.	Now you can query the dataset using the bq command line utility.  Just how many white-haired, green-eyed, living, evil superhero characters are there?
 
-		bq query "SELECT NAME, YEAR FROM [gcf_tests_bq_dataset.gcf_tests_bq_table] WHERE EYE='Green Eyes' AND ALIGN='Bad Characters' AND HAIR='White Hair' AND ALIVE='Living Characters'"
+		bq query "SELECT NAME, YEAR FROM [gcf_bq_dataset.gcf_bq_table] WHERE EYE='Green Eyes' AND ALIGN='Bad Characters' AND HAIR='White Hair' AND ALIVE='Living Characters'"
 
 
 You should see this result:

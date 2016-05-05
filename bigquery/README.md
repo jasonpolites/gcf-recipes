@@ -1,8 +1,8 @@
 # Google Cloud Functions Recipes
-## Cloud Bigquery
+## Cloud BigQuery
 
 ### Overview
-This recipe demonstrates using Cloud Functions to import data into Bigquery in response to a file upload event in Cloud Storage.  Where applicable:
+This recipe demonstrates using Cloud Functions to import data into BigQuery in response to a file upload event in Cloud Storage.  Where applicable:
 
 **Replace [PROJECT-ID] with your Cloud Platform project ID**
 

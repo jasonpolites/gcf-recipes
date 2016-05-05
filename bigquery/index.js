@@ -3,7 +3,7 @@ var gcloud = require('gcloud');
 // Import the configuration required for this function.
 var config = require('./config.js')(process.env.GCP_PROJECT);
 
-// Keep a reference to the bigquery client
+// Keep a reference to the BigQuery client
 // This is OK because the function is stateless
 var bigquery = null;
 var storage = null;
@@ -27,7 +27,7 @@ var onFileArrived = function(context, data) {
   var bucket = storage.bucket(data['bucket']);
   var file = bucket.file(data['name']);
 
-  console.log('Sending file ' + file.name + ' to Bigquery...');
+  console.log('Sending file ' + file.name + ' to BigQuery...');
 
   // Send this file to bigquery
   _sendToBigQuery(file, function(err, job) {
@@ -46,7 +46,7 @@ var onFileArrived = function(context, data) {
       if(err) {
         console.error(err);
         context.failure('The file ' + oldFile.name + ' was successfully sent to ' + 
-          'bigquery, but a failure occurred while marking the file as ' + 
+          'BigQuery, but a failure occurred while marking the file as ' + 
           'processed.  Check the logs for more details.');
         return;
       }
@@ -72,7 +72,7 @@ var _markAsProcessed = function(gcsFile, callback) {
   });  
 }
 
-// Sends a GCS File to Bigquery
+// Sends a GCS File to BigQuery
 var _sendToBigQuery = function(gcsFile, callback) {
 
   var bigquery = _getBQClient();
@@ -120,7 +120,7 @@ var _waitForJobCompletion = function(job, timeout, callback) {
 
   function checkJobStatus() {
 
-    // console.log('Checking status of bigquery job ' + job.id);
+    // console.log('Checking status of BigQuery job ' + job.id);
 
     job.getMetadata(function(err, apiResponse) {
       if (err) {
@@ -128,14 +128,14 @@ var _waitForJobCompletion = function(job, timeout, callback) {
         return;
       }
 
-      // console.log('Bigquery job ' + job.id + ' has status of ' + apiResponse.status.state);
+      // console.log('BigQuery job ' + job.id + ' has status of ' + apiResponse.status.state);
 
       if (apiResponse.status.state !== 'DONE') {
 
         timeWaited += waitTime;
 
         if(timeWaited >= timeout) {
-          callback('Timeout waiting (' + timeout + 'ms) for Bigquery job to complete');
+          callback('Timeout waiting (' + timeout + 'ms) for BigQuery job to complete');
         }
 
         // Job has not completed yet. Check again.
@@ -157,7 +157,7 @@ var _waitForJobCompletion = function(job, timeout, callback) {
   }
 }
 
-// Gets or creates a Bigquery client
+// Gets or creates a BigQuery client
 var _getBQClient = function() {
   if(bigquery === null) {
     bigquery = gcloud.bigquery({
@@ -179,7 +179,7 @@ var _getStorageClient = function() {
   return storage;
 }
 
-// Gets or creates the bigquery dataset
+// Gets or creates the BigQuery dataset
 var _getOrCreateDataset = function(bigquery, callback) {
   var dataset = bigquery.dataset(config['dataset']);
 

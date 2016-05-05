@@ -7,11 +7,11 @@
  - [Sending email](/sendgrid) with SendGrid
  - [Sending SMS](/twilio) messages with Twilio
  - Reading and Writing with [Google Cloud Datastore](/datastore)
+ - Exporting data to [Google Cloud BigQuery](/bigquery)
 
 *Coming Soon...*
 
  - Processing Cloud Logging events
- - Exporting data to Cloud BigQuery
  - Responding to Google Drive events
  - Processing GMail events
  - Authentication

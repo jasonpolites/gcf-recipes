@@ -15,7 +15,7 @@ module.exports = {
 
     sendgrid.send(payload, function(err, json) {
       if (err) { 
-        console.log(err);
+        console.error(err);
         context.failure(err);
       } else {
         console.log(json);

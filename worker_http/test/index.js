@@ -73,9 +73,10 @@ describe('Master Worker Tests', function() {
     var storage = {'bucket': function (){}};
     var bucket = {'file': function (){}};
     var file = {'createReadStream': function (){}};
-    var storageFn = sinon.stub(gcloud, 'storage').returns(storage);
-    var bucketFn = sinon.stub(storage, 'bucket').returns(bucket);
-    var fileFn = sinon.stub(bucket, 'file').returns(file);
+    
+    sinon.stub(gcloud, 'storage').returns(storage);
+    sinon.stub(storage, 'bucket').returns(bucket);
+    sinon.stub(bucket, 'file').returns(file);
 
     // Return our dummy stream from the stubbed file
     sinon.stub(file, 'createReadStream').returns(dummyStream);

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "preversion": "npm test",
-    "unit": "mocha --recursive test/ -t 3000",
+    "unit": "istanbul cover _mocha test/ --recursive",
     "test": "npm run unit"
   },
   "keywords": [
@@ -21,7 +21,9 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
+    "istanbul": "^0.4.3",    
     "mocha": "^2.4.5",
+    "proxyquire": "^1.7.7",
     "sinon": "^1.17.3"
   }
 }

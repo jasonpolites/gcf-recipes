@@ -50,3 +50,17 @@ This recipe shows you how to read and write an entity in Datastore from a Cloud 
 10. Call the "ds-get" function again to verify it was deleted
 
 		gcloud alpha functions call ds-get --data '{"kind": "gcf-test", "key": "foobar"}' 
+
+#### Running Tests
+This recipe comes with a suite of unit tests.  To run the tests locally, just use `npm test`
+
+```
+npm install
+npm test
+```
+
+The tests will also produce code coverage reports, written to the `/coverage` directory.  After running the tests, you can view coverage with
+
+```
+open coverage/lcov-report/index.html 
+```

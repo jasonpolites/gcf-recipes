@@ -65,7 +65,7 @@ npm install
 npm test
 ```
 
-The tests will also produce code coverage reports, written to the `/coverage' directory.  After running the tests, you can view coverage with
+The tests will also produce code coverage reports, written to the `/coverage` directory.  After running the tests, you can view coverage with
 
 ```
 open coverage/lcov-report/index.html 

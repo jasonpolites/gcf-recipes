@@ -56,3 +56,11 @@ You should see something like this in your console
 ```
 The file sample.txt has 114 words
 ```
+
+#### Running Tests
+This recipe comes with a suite of unit tests.  To run the tests locally, just use `npm test`
+
+```
+npm install
+npm test
+```

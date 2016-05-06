@@ -30,12 +30,11 @@ var worker = function(context, data) {
     count += line.split(/\s+/).length;
   }
 
-  console.log(
-      'Total [' + count + '] words in batch of size [' + batch.length + ']');
+  // console.log(
+      // 'Total [' + count + '] words in batch of size [' + batch.length + ']');
 
   context.success(count + '');
 };
-
 
 /**
  * Reads the source file and fans out to the mappers.
@@ -73,7 +72,7 @@ var master = function(context, data) {
 
   // We are going to batch the lines, we could use any number here
   var batch = [];
-  var BATCH_SIZE = 3;
+  var BATCH_SIZE = data['batch_size'] || 3; // 3 is defauld
 
   lineReader.on('line', function(line) {
     if (batch.length === BATCH_SIZE) {
@@ -93,20 +92,22 @@ var master = function(context, data) {
     }
 
     Promise.all(promises).then(
-        function(result) {
-          console.log('All workers have returned');
-          // The result will be an array of return values from the workers.
-          var count = 0;
-          for (var i = 0; i < result.length; ++i) {
-            count += parseInt(result[i]);
-          }
-          context.success(
-              'The file ' + data['file'] + ' has ' + count + ' words');
-        },
-        function(err) {
-          console.error('Error!');
-          context.failure(err);
-        });
+      function(result) {
+        console.log('All workers have returned');
+        // The result will be an array of return values from the workers.
+        var count = 0;
+        for (var i = 0; i < result.length; ++i) {
+          count += parseInt(result[i]);
+        }
+
+        context.success(
+            'The file ' + data['file'] + ' has ' + count + ' words');
+
+      },
+      function(err) {
+        console.error(err);
+        context.failure(err);
+      });
   });
 };
 
@@ -115,6 +116,7 @@ var master = function(context, data) {
  * Invokes another Cloud Function.
  */
 var invoke = function(url, batch, key) {
+
   // This will return a promise
   return req({
     method: 'POST',
@@ -129,7 +131,6 @@ var invoke = function(url, batch, key) {
     json: true,
   });
 };
-
 
 module.exports = {
   worker: worker,

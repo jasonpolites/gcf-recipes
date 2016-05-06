@@ -4,7 +4,9 @@
   "description": "Google Cloud Functions Recipes - Cloud Datastore",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "preversion": "npm test",
+    "unit": "mocha --recursive test/ -t 3000",
+    "test": "npm run unit"
   },
   "keywords": [
     "cloud",
@@ -16,5 +18,10 @@
   "author": "Jason Polites",
   "dependencies": {
     "gcloud": "^0.30.2"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^2.4.5",
+    "sinon": "^1.17.3"
   }
 }

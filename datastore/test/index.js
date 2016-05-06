@@ -225,6 +225,4 @@ describe('Datastore Tests', function() {
     // Restore the stub for the next test
     gcloud.datastore.restore();
   });      
-
-
 });

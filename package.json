@@ -1,0 +1,21 @@
+{
+  "name": "gcf-recipes",
+  "version": "1.0.0",
+  "description": "Google Cloud Functions Recipes",
+  "scripts": {
+    "preversion": "npm test",
+    "unit": "mocha --recursive **/test/**",
+    "test": "npm run unit"
+  },
+  "keywords": [
+    "cloud",
+    "functions",
+    "gcp",
+    "gcf"
+  ],
+  "author": "Jason Polites",
+  "license": "ISC",
+  "devDependencies": {
+    "mocha": "^2.4.5"
+  }
+}

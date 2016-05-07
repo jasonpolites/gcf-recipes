@@ -85,10 +85,6 @@ describe('Cloud Storage Tests', function() {
     var storageStub = sinon.stub(storage, 'bucket').returns(bucket);
     var bucketStub = sinon.stub(bucket, 'file').returns(file);
 
-    // Mock the storage instance so we can assert that it was called with 
-    // the correct bucket name
-    // var storageSpy = sinon.spy(storage, 'bucket');
-
     // Return our dummy stream from the stubbed file
     sinon.stub(file, 'createReadStream').returns(dummyStream);
 

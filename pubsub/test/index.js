@@ -188,5 +188,4 @@ describe('Cloud Pub/Sub Tests', function() {
     sinon.assert.calledWith(consoleStub, 'foobar_message');
     console.log.restore();
   });
-
 });

@@ -25,7 +25,7 @@ var worker = function(context, data) {
   var outTopic = pubsub.topic(data['out-topic']);
 
   console.log('Worker ' + data['worker'] + ' reporting total count of ' +
-      count + ' in batch of size [' + batch.length + ']');
+    count + ' in batch of size [' + batch.length + ']');
 
   outTopic.publish({
     data: {
@@ -69,14 +69,17 @@ var master = function(context, data) {
 
   // Load the master file using the stream API
   var inStream = bucket.file(data['file']).createReadStream()
-      .on('error', function(err) {
-        context.failure('Error reading file stream for ' + data['file'] + ': ' +
-            err.message);
-        return;
-      });
+    .on('error', function(err) {
+      context.failure('Error reading file stream for ' + data['file'] +
+        ': ' +
+        err.message);
+      return;
+    });
 
   // use the readLine module to read the stream line-by line
-  var lineReader = require('readline').createInterface({input: inStream});
+  var lineReader = require('readline').createInterface({
+    input: inStream
+  });
 
   // Create an array to hold our request promises
   var promises = [];
@@ -90,7 +93,8 @@ var master = function(context, data) {
   lineReader.on('line', function(line) {
     if (batch.length === BATCH_SIZE) {
       // Send the batch.
-      console.log('Sending batch of ' + batch.length + ' lines to worker worker' + workerId);
+      console.log('Sending batch of ' + batch.length +
+        ' lines to worker worker' + workerId);
 
       inTopic.publish({
         data: {
@@ -117,7 +121,8 @@ var master = function(context, data) {
 
     // We might have trailing lines in an incomplete batch.
     if (batch.length > 0) {
-      console.log('Sending batch of ' + batch.length + ' lines to worker worker' + workerId);
+      console.log('Sending batch of ' + batch.length +
+        ' lines to worker worker' + workerId);
 
       inTopic.publish({
         data: {
@@ -141,7 +146,8 @@ var master = function(context, data) {
       reuseExisting: true
     };
 
-    outTopic.subscribe('mapr-pubsub-subscription', options, function(err, subscription) {
+    outTopic.subscribe('mapr-pubsub-subscription', options, function(err,
+      subscription) {
 
       if (err) {
         console.error(err);
@@ -163,7 +169,8 @@ var master = function(context, data) {
 
         var worker = message['data']['worker'];
 
-        console.log('Got count of ' + message['data']['count'] + ' from worker ' + worker);
+        console.log('Got count of ' + message['data']['count'] +
+          ' from worker ' + worker);
 
         if (returned[worker] !== true) {
           batchCount--;
@@ -175,10 +182,12 @@ var master = function(context, data) {
             subscription.removeListener('message', onMessage);
             subscription.removeListener('error', onError);
             context.success(
-                'The file ' + data['file'] + ' has ' + count + ' words');
+              'The file ' + data['file'] + ' has ' + count +
+              ' words');
           }
         } else {
-          console.log('Recieved duplicate result from worker ' + worker);
+          console.log('Recieved duplicate result from worker ' +
+            worker);
         }
       };
 

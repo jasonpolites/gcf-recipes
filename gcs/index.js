@@ -8,14 +8,14 @@ module.exports = {
 
     if (!bucketName) {
       context.failure(
-          'Bucket not provided. Make sure you have a \'bucket\' property in ' +
-          'your request');
+        'Bucket not provided. Make sure you have a \'bucket\' property in ' +
+        'your request');
       return;
     }
     if (!fileName) {
       context.failure(
-          'Filename not provided. Make sure you have a \'file\' property in ' +
-          'your request');
+        'Filename not provided. Make sure you have a \'file\' property in ' +
+        'your request');
       return;
     }
 
@@ -39,7 +39,8 @@ module.exports = {
     });
 
     lineReader.on('close', function() {
-      context.success('The file ' + fileName + ' has ' + count + ' words');
+      context.success('The file ' + fileName + ' has ' + count +
+        ' words');
     });
   },
 };

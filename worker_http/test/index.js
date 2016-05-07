@@ -7,7 +7,7 @@ var SHARED_KEY = 'some_random_high_entropy_string';
 
 describe('Master Worker Tests', function() {
 
-  it('Verifies that failure is called without a valid shared key', function () {
+  it('Verifies that failure is called without a valid shared key', function() {
     var mut = require('../index.js');
 
     var data = {};
@@ -48,7 +48,7 @@ describe('Master Worker Tests', function() {
     chai.expect(value).to.equal('8');
   });
 
-  it('Loads a file and correctly calls worker processes', function (done) {
+  it('Loads a file and correctly calls worker processes', function(done) {
 
     // Manually create sample data to represent the 'file'
     var sample_data = 'The quick brown fox\njumps over\nthe lazy dog';
@@ -66,14 +66,20 @@ describe('Master Worker Tests', function() {
       'file': 'foobar_file',
       'bucket': 'foobar_bucket',
       'workerFunctionUrl': 'foobar_url'
-    };    
+    };
 
     // Stub out gcloud storage so we can return our dummy file stream
     var gcloud = require('gcloud');
-    var storage = {'bucket': function (){}};
-    var bucket = {'file': function (){}};
-    var file = {'createReadStream': function (){}};
-    
+    var storage = {
+      'bucket': function() {}
+    };
+    var bucket = {
+      'file': function() {}
+    };
+    var file = {
+      'createReadStream': function() {}
+    };
+
     sinon.stub(gcloud, 'storage').returns(storage);
     sinon.stub(storage, 'bucket').returns(bucket);
     sinon.stub(bucket, 'file').returns(file);
@@ -90,12 +96,13 @@ describe('Master Worker Tests', function() {
 
     // Create a mock context object
     var context = {
-      success: function (val) {
+      success: function(val) {
         try {
 
           // We expected our worker function to be called 3 times, and our mock
           // request promise resolves to 33 every time
-          chai.expect(val).to.equal('The file foobar_file has 99 words');
+          chai.expect(val).to.equal(
+            'The file foobar_file has 99 words');
           req.verify();
 
           // We now know that the mock was called 3 times, verify the arguments
@@ -103,9 +110,11 @@ describe('Master Worker Tests', function() {
             req.getCall(0).args[0].body.batch[0]).to.equal(
             'The quick brown fox');
           chai.expect(
-            req.getCall(1).args[0].body.batch[0]).to.equal('jumps over');
+            req.getCall(1).args[0].body.batch[0]).to.equal(
+            'jumps over');
           chai.expect(
-            req.getCall(2).args[0].body.batch[0]).to.equal('the lazy dog');
+            req.getCall(2).args[0].body.batch[0]).to.equal(
+            'the lazy dog');
 
           done();
 
@@ -113,7 +122,7 @@ describe('Master Worker Tests', function() {
           done(e);
         }
       },
-      failure: function (err) {
+      failure: function(err) {
         done(err);
       }
     };
@@ -121,7 +130,7 @@ describe('Master Worker Tests', function() {
     // We need the module to load our mocked versions
     // Use proxyquire to shim in the stubs
     var stubs = {
-      'gcloud': gcloud, 
+      'gcloud': gcloud,
       'request-promise': req
     };
 

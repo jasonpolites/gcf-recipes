@@ -16,9 +16,9 @@ module.exports = function(projectId) {
     // The Bigquery table needs a schema.  This is designed to match the
     // sample file (dc-wikia-data.csv)
     schema: 'page_id:integer, name:string, urlslug:string, ID:string, ' +
-        'ALIGN:string, EYE:string, HAIR:string, SEX:string, GSM:string, ' +
-        'ALIVE:string, APPEARANCES:integer, FIRST_APPEARANCE:string, ' +
-        'YEAR:integer',
+      'ALIGN:string, EYE:string, HAIR:string, SEX:string, GSM:string, ' +
+      'ALIVE:string, APPEARANCES:integer, FIRST_APPEARANCE:string, ' +
+      'YEAR:integer',
 
     // The time, in milliseconds, we are prepared to wait for the import
     // job to complete

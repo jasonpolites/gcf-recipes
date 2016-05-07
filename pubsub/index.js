@@ -12,14 +12,14 @@ module.exports = {
 
     if (!topicName) {
       context.failure(
-          'Topic not provided. Make sure you have a \'topic\' property in ' +
-          'your request');
+        'Topic not provided. Make sure you have a \'topic\' property in ' +
+        'your request');
       return;
     }
     if (!message) {
       context.failure(
-          'Message not provided. Make sure you have a \'message\' property ' +
-          'in your request');
+        'Message not provided. Make sure you have a \'message\' property ' +
+        'in your request');
       return;
     }
 
@@ -35,21 +35,19 @@ module.exports = {
     var topic = pubsub.topic(topicName);
 
     // Pub/Sub messages must be valid JSON objects.
-    topic.publish(
-        {
-          data: {
-            message: message,
-          },
+    topic.publish({
+        data: {
+          message: message,
         },
-        function(err) {
-          if (err) {
-            context.failure(err);
-          } else {
-            context.success();
-          }
-        });
+      },
+      function(err) {
+        if (err) {
+          context.failure(err);
+        } else {
+          context.success();
+        }
+      });
   },
-
 
   /**
    * Triggered from a message on a Pub/Sub topic.

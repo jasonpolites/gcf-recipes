@@ -4,7 +4,9 @@
   "description": "Google Cloud Functions Recipes - Cloud Storage",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "preversion": "npm test",
+    "unit": "istanbul cover _mocha test/ --recursive",
+    "test": "npm run unit"
   },
   "keywords": [
     "cloud",
@@ -17,5 +19,12 @@
   "license": "ISC",
   "dependencies": {
     "gcloud": "^0.30.2"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "istanbul": "^0.4.3",
+    "mocha": "^2.4.5",
+    "proxyquire": "^1.7.7",
+    "sinon": "^1.17.3"
   }
 }

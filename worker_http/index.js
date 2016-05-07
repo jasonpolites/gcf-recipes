@@ -6,7 +6,6 @@ var req = require('request-promise');
 // Use a simple shared key to assert calling authority.
 var SHARED_KEY = 'some_random_high_entropy_string';
 
-
 /**
  * Counts the number of words in the line.
  */
@@ -32,7 +31,7 @@ var worker = function(context, data) {
   }
 
   // console.log(
-      // 'Total [' + count + '] words in batch of size [' + batch.length + ']');
+  // 'Total [' + count + '] words in batch of size [' + batch.length + ']');
 
   context.success(count + '');
 };
@@ -56,16 +55,19 @@ var master = function(context, data) {
 
   // Load the master file using the stream API
   console.log(
-      'Opening file [' + data['file'] + '] and creating a read stream...');
+    'Opening file [' + data['file'] + '] and creating a read stream...');
   var inStream = bucket.file(data['file']).createReadStream()
-      .on('error', function(err) {
-        context.failure('Error reading file stream for ' + data['file'] + ': ' + err.message);
-        return;
-      });
+    .on('error', function(err) {
+      context.failure('Error reading file stream for ' + data['file'] +
+        ': ' + err.message);
+      return;
+    });
 
   // use the readLine module to read the stream line-by line
   console.log('Got stream, reading file line-by-line...');
-  var lineReader = require('readline').createInterface({input: inStream});
+  var lineReader = require('readline').createInterface({
+    input: inStream
+  });
 
   // Create an array to hold our request promises
   var promises = [];
@@ -101,7 +103,7 @@ var master = function(context, data) {
         }
 
         context.success(
-            'The file ' + data['file'] + ' has ' + count + ' words');
+          'The file ' + data['file'] + ' has ' + count + ' words');
 
       },
       function(err) {

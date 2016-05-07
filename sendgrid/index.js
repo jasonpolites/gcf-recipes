@@ -1,4 +1,3 @@
-
 module.exports = {
   sendEmail: function(context, data) {
     // Using SendGrid's Node.js Library https://github.com/sendgrid/sendgrid-nodejs

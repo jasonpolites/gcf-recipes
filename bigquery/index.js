@@ -45,9 +45,10 @@ var onFileArrived = function(context, data) {
     _markAsProcessed(file, function(err, oldFile, newFile) {
       if (err) {
         console.error(err);
-        context.failure('The file ' + oldFile.name + ' was successfully sent to ' +
-            'BigQuery, but a failure occurred while marking the file as ' +
-            'processed.  Check the logs for more details.');
+        context.failure('The file ' + oldFile.name +
+          ' was successfully sent to ' +
+          'BigQuery, but a failure occurred while marking the file as ' +
+          'processed.  Check the logs for more details.');
         return;
       }
 
@@ -89,7 +90,8 @@ var _sendToBigQuery = function(gcsFile, callback) {
         return;
       }
 
-      console.log('Importing data from ' + gcsFile.name + ' into ' + dataset.id + '/' + table.id + '...');
+      console.log('Importing data from ' + gcsFile.name + ' into ' +
+        dataset.id + '/' + table.id + '...');
 
       table.import(gcsFile, function(err, job, apiResponse) {
         if (err) {
@@ -103,7 +105,8 @@ var _sendToBigQuery = function(gcsFile, callback) {
         // Wait for the import job to complete.
         // This is optional.  If you don't care about blocking while data is
         // imported you could simply return here without the wait.
-        _waitForJobCompletion(job, config['job_timeout'], callback);
+        _waitForJobCompletion(job, config['job_timeout'],
+          callback);
       });
     });
   });
@@ -132,7 +135,8 @@ var _waitForJobCompletion = function(job, timeout, callback) {
         timeWaited += waitTime;
 
         if (timeWaited >= timeout) {
-          callback('Timeout waiting (' + timeout + 'ms) for BigQuery job to complete');
+          callback('Timeout waiting (' + timeout +
+            'ms) for BigQuery job to complete');
         }
 
         // Job has not completed yet. Check again.
@@ -218,7 +222,8 @@ var _getOrCreateTable = function(dataset, callback) {
         schema: config['schema']
       };
 
-      dataset.createTable(config['table'], options, function(err, table, apiResponse) {
+      dataset.createTable(config['table'], options, function(err,
+        table, apiResponse) {
         if (err) {
           callback(err);
           return;

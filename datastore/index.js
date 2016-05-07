@@ -11,8 +11,8 @@ var set = function(context, data) {
 
   if (!value) {
     context.failure(
-        'Value not provided. Make sure you have a \'value\' property ' +
-        'in your request');
+      'Value not provided. Make sure you have a \'value\' property ' +
+      'in your request');
     return;
   }
 
@@ -80,13 +80,13 @@ var _getKeyFromData = function(data, callback) {
 
   if (!key) {
     callback('Key not provided. Make sure you have a \'key\' property in ' +
-        'your request');
+      'your request');
     return;
   }
 
   if (!kind) {
     callback('Kind not provided. Make sure you have a \'kind\' property in ' +
-        'your request');
+      'your request');
     return;
   }
 

@@ -17,7 +17,6 @@ module.exports = {
         console.error(err);
         context.failure(err);
       } else {
-        console.log(message);
         context.success(message);
       }
     });

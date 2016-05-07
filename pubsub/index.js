@@ -44,7 +44,7 @@ module.exports = {
         if (err) {
           context.failure(err);
         } else {
-          context.success();
+          context.success('Message published');
         }
       });
   },

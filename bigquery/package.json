@@ -4,7 +4,9 @@
   "description": "Google Cloud Functions Recipes - Cloud Bigquery",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "preversion": "npm test",
+    "unit": "istanbul cover _mocha test/ --recursive",
+    "test": "npm run unit"
   },
   "keywords": [
     "cloud",
@@ -16,5 +18,12 @@
   "author": "Jason Polites",
   "dependencies": {
     "gcloud": "^0.30.2"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "istanbul": "^1.0.0-alpha.2",
+    "mocha": "^2.4.5",
+    "proxyquire": "^1.7.7",
+    "sinon": "^1.17.3"
   }
 }

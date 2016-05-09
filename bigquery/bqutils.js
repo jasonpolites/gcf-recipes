@@ -1,3 +1,7 @@
+// Use our logging utilty just as a convenience to skip 
+// console logs during tests
+var logger = require('./logger.js');
+
 var self = {
 
 	// Imports a GCS file into bigquery
@@ -16,7 +20,7 @@ var self = {
 					return;
 				}
 
-				console.log('Importing data from ' + gcsFile.name + ' into ' +
+				logger.log('Importing data from ' + gcsFile.name + ' into ' +
 					dataset.id + '/' + table.id + '...');
 
 				table.import(gcsFile, function(err, job, apiResponse) {
@@ -25,7 +29,7 @@ var self = {
 						return;
 					}
 
-					console.log('Data import job created');
+					logger.log('Data import job created');
 
 					// Wait for the import job to complete.
 					// This is optional.  If you don't care about blocking while data is

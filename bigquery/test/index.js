@@ -1,5 +1,6 @@
 var sinon = require('sinon');
 var bqUtils = require('../bqutils.js');
+var proxyquire = require('proxyquire').noCallThru();
 
 describe('getOrCreateDataset Tests', function() {
 
@@ -248,7 +249,6 @@ describe('getOrCreateTable Tests', function() {
 describe('waitForJobCompletion Tests', function() {
   var
     mockJob,
-
     job = {
       'getMetadata': function() {}
     };
@@ -402,6 +402,7 @@ describe('waitForJobCompletion Tests', function() {
 describe('import Tests', function() {
 
   var
+    utilsMock,
     mockTable,
     table = {
       'import': function() {}
@@ -409,17 +410,18 @@ describe('import Tests', function() {
 
   beforeEach(function() {
     mockTable = sinon.mock(table);
+    utilsMock = sinon.mock(bqUtils);
   });
 
   afterEach(function() {
     mockTable.restore();
+    utilsMock.restore();
   });
 
   it('Imports data to bigquery as expected', function() {
 
     // We are going to stub out the dependent methods because these are already tested
     var
-      utilsMock = sinon.mock(bqUtils),
       bqClient = sinon.stub(),
       dataset = sinon.stub(),
       gcsFile = sinon.stub(),
@@ -451,7 +453,349 @@ describe('import Tests', function() {
       callback);
 
     utilsMock.verify();
-    utilsMock.restore();
+    mockTable.verify();
+  });
+});
+
+describe('onFileArrived Tests', function() {
+
+  var context = {
+    'success': function() {},
+    'failure': function() {},
+    'done': function() {}
+  };
+
+  var contextMock;
+
+  beforeEach(function() {
+    contextMock = sinon.mock(context);
+  });
+
+  afterEach(function() {
+    contextMock.restore();
+  });
+
+  describe('test handling of delete events', function() {
+
+    // Declare the mocks outside the test so we ensure they are restored
+    // even in the event of a test failure 
+    var utilsMock;
+
+    after(function() {
+      if (utilsMock) {
+        utilsMock.restore();
+      }
+    });
+
+    it('Exits immediately for file delete events', function() {
+
+      utilsMock = sinon.mock(bqUtils);
+
+      var stubs = {
+        './bqutils.js': utilsMock,
+      };
+
+      // Require the module under test and stub out bqutils
+      var mut = proxyquire('../index.js', stubs);
+
+      // We expect that the function returns immediately if the notification 
+      // corresponds to a deleted file.
+      var data = {
+        'timeDeleted': new Date()
+      };
+
+      contextMock.expects('done').once();
+
+      // We expect that create is NOT called
+      utilsMock.expects('import').never();
+
+      mut.onFileArrived(context, data);
+
+      contextMock.verify();
+      utilsMock.verify();
+    });
+  });
+
+
+  describe('test import in onFileArrived', function() {
+
+    // Declare the mocks outside the test so we ensure they are restored
+    // even in the event of a test failure
+    var
+      mut,
+      bqUtilsMock,
+      mutMock,
+      gcloud,
+      mutStub,
+      config,
+      job,
+      bigquery,
+      storage,
+      bucket,
+      file;
+
+    beforeEach(function() {
+
+      gcloud = require('gcloud');
+      bqUtilsMock = sinon.mock(bqUtils);
+
+      bigquery = {};
+      job = {};
+      storage = {
+        'bucket': function() {}
+      };
+      bucket = {
+        'file': function() {}
+      };
+      file = {
+        'name': 'foobar_file'
+      };
+
+      sinon.stub(gcloud, 'bigquery').returns(bigquery);
+      sinon.stub(gcloud, 'storage').returns(storage);
+      sinon.stub(storage, 'bucket').returns(bucket);
+      sinon.stub(bucket, 'file').returns(file);
+
+      // Create a dummy config so we can effectively assert the values
+      config = function() {
+        return {
+          'dataset': 'foobar_dataset',
+          'table': 'foobar_table',
+          'job_timeout': 42 // Magic number just for this test
+        }
+      };
+
+      var stubs = {
+        'gcloud': gcloud,
+        './bqutils.js': bqUtils,
+        './config.js': config
+      };
+
+      // Require the module under test and stub out dependencies
+      mut = proxyquire('../index.js', stubs);
+
+      mutMock = sinon.mock(mut);
+
+    });
+
+    afterEach(function() {
+      if (bqUtilsMock) {
+        bqUtilsMock.restore();
+      }
+      if (mutMock) {
+        mutMock.restore();
+      }
+
+      gcloud.bigquery.restore();
+      gcloud.storage.restore();
+
+      if (mutStub) {
+        mutStub.restore();
+      }
+    });
+
+    it(
+      'Calls import with correct arguments and marks file as processed on success',
+      function() {
+        var
+          data = {
+            'bucket': 'foobar_bucket',
+            'name': 'foobar_name',
+          };
+
+        // Expect the import method to be called
+        // The mock calls the callback as the real method would
+        // This simulates expected behavior, but the actual test for this is elsewhere
+        bqUtilsMock.expects('import').withArgs(bigquery, file,
+            'foobar_dataset',
+            'foobar_table', 42)
+          .callsArgWith(5, null, job);
+
+        // Stub out the move method, we will test this elsewhere
+        mutMock.expects('markAsProcessed').withArgs(file).callsArgWith(
+          1, null,
+          file, file);
+
+        // Verify that success is called
+        contextMock.expects('success').withArgs(
+          'foobar_file imported successfully');
+
+        contextMock.expects('failure').never();
+
+        // Call the module
+        mut.onFileArrived(context, data);
+
+        // verify the mocks
+        contextMock.verify();
+        bqUtilsMock.verify();
+        mutMock.verify();
+      });
+
+    it(
+      'Reports failure on context if import failed',
+      function() {
+        var
+          data = {
+            'bucket': 'foobar_bucket',
+            'name': 'foobar_name',
+          };
+
+        // Expect the import method to be called
+        // The mock calls the callback as the real method would
+        // This simulates expected behavior, but the actual test for this is elsewhere
+        bqUtilsMock.expects('import').withArgs(bigquery, file,
+            'foobar_dataset',
+            'foobar_table', 42)
+          .callsArgWith(5, 'foobar_error', job);
+
+        // Stub out the move method, we will test this elsewhere
+        mutStub = sinon.stub(mut, 'markAsProcessed').callsArgWith(
+          1, null,
+          file, file);
+
+        // Verify that failure is called
+        contextMock.expects('failure').once().withArgs('foobar_error');
+        contextMock.expects('success').never();
+
+        // Call the module
+        mut.onFileArrived(context, data);
+
+        // verify the mocks
+        contextMock.verify();
+        bqUtilsMock.verify();
+        mutMock.verify();
+      });
+
+    it(
+      'Reports failure on context if markAsProcessed failed',
+      function() {
+        var
+          data = {
+            'bucket': 'foobar_bucket',
+            'name': 'foobar_name',
+          };
+
+        // Expect the import method to be called
+        // The mock calls the callback as the real method would
+        // This simulates expected behavior, but the actual test for this is elsewhere
+        bqUtilsMock.expects('import').withArgs(bigquery, file,
+            'foobar_dataset',
+            'foobar_table', 42)
+          .callsArgWith(5, null, job);
+
+        // Stub out the move method, we will test this elsewhere
+        mutMock.expects('markAsProcessed').withArgs(file).callsArgWith(
+          1, 'foobar_error');
+
+        // Verify that failure is called
+        contextMock.expects('failure').once().withArgs(
+          'The file foobar_file was successfully sent to BigQuery, but a failure occurred while marking the file as processed.  Check the logs for more details.'
+        );
+        contextMock.expects('success').never();
+
+        // Call the module
+        mut.onFileArrived(context, data);
+
+        // verify the mocks
+        contextMock.verify();
+        bqUtilsMock.verify();
+        mutMock.verify();
+      });
+  });
+
+  // This is somewhat of a bogus test as the fact that it "moves"
+  // the file is largely incidental.  What we really care about is whether
+  // the file is subsequently visibly in the source bucket, which would
+  // require an integration test
+  describe('markAsProcessed test', function() {
+
+    // Declare mocks outside the test so we ensure they are restored
+    var
+      gcloud,
+      destinationBucketName,
+      storage,
+      destinationBucket,
+      apiResponse,
+      gcsFile,
+      destinationFile,
+      callback,
+      fileMock,
+      config,
+      mut
+
+    beforeEach(function() {
+      gcloud = require('gcloud');
+
+      destinationBucketName = 'foobar_bucket';
+
+      storage = {
+        'bucket': function() {}
+      };
+
+      destinationBucket = {};
+
+      // apiResponse can be anything, we just need to make sure it matches
+      apiResponse = {
+        'response': 'foobar'
+      };
+
+      gcsFile = {
+        'move': function() {}
+      };
+
+      destinationFile = {};
+
+      callback = sinon.spy();
+
+      sinon.stub(gcloud, 'storage').returns(storage);
+      sinon.stub(storage, 'bucket').withArgs(destinationBucketName)
+        .returns(destinationBucket);
+
+      fileMock = sinon.mock(gcsFile);
+
+      config = function() {
+        return {
+          'processed_bucket': destinationBucketName
+        };
+      };
+
+      var stubs = {
+        'gcloud': gcloud,
+        './config.js': config
+      };
+
+      mut = proxyquire('../index.js', stubs);
+    });
+
+    afterEach(function() {
+      gcloud.storage.restore();
+      fileMock.restore();
+    });
+
+    it('Moves the file to an alternate bucket', function() {
+
+      fileMock.expects('move').withArgs().callsArgWith(1, null,
+        destinationFile, apiResponse);
+
+      mut.markAsProcessed(gcsFile, callback);
+
+      sinon.assert.calledWith(callback, null, gcsFile,
+        destinationFile);
+
+      fileMock.verify();
+    });
+
+    it('Reports error to callback on move fail', function() {
+
+      fileMock.expects('move').withArgs().callsArgWith(1,
+        'foobar_error');
+
+      mut.markAsProcessed(gcsFile, callback);
+
+      sinon.assert.calledWith(callback, 'foobar_error');
+
+      fileMock.verify();
+    });
 
   });
 });

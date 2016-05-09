@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "preversion": "npm test",
-    "unit": "istanbul cover _mocha test/ --recursive",
+    "unit": "NODE_ENV=test istanbul cover -x logger.js _mocha test/ --recursive",
     "test": "npm run unit"
   },
   "keywords": [

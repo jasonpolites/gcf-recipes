@@ -6,6 +6,9 @@ This recipe demonstrates using Cloud Functions to import data into BigQuery in r
 
 **Replace [PROJECT-ID] with your Cloud Platform project ID**
 
+### Notes on deployment
+If you have a large number of dependencies in your `package.json` file and you run `npm install` locally, you may find deployments to be slow because you will be deploying your fully-materialized `node_modules` folder.  If you don't have any private modules in your `node_modules` folder we recommend you `rm -rf node_modules` prior to invoking `deploy`
+
 ### Cooking the Recipe
 1.	Follow the [Cloud Functions quickstart guide](https://cloud.google.com/functions/quickstart) to setup Cloud Functions for your project
 

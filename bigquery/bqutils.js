@@ -80,8 +80,10 @@ var self = {
 			if (!exists) {
 				// We need to set the schema on the table
 				var options = {
-					schema: strSchema
+					'schema': strSchema
 				};
+
+				console.log('Creating table with schema ' + options.schema)
 
 				dataset.createTable(strTableName, options, function(err,
 					table, apiResponse) {

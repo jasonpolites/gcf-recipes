@@ -40,6 +40,7 @@ var self = {
 
     // Send this file to bigquery
     bqutils.import(bigquery, file, config['dataset'], config['table'],
+      config['schema'],
       config['job_timeout'],
       function(err, job) {
 

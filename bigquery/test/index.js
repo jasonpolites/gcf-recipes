@@ -428,6 +428,7 @@ describe('import Tests', function() {
       job = sinon.stub(),
       datasetName = 'foobar_dataset',
       tableName = 'foobar_table',
+      schema = 'foobar_schema',
       timeout = 100,
       callback = sinon.stub();
 
@@ -437,8 +438,8 @@ describe('import Tests', function() {
       dataset);
 
     utilsMock.expects('getOrCreateTable').once().withArgs(dataset,
-      tableName).callsArgWith(
-      2, null,
+      tableName, schema).callsArgWith(
+      3, null,
       table);
 
     mockTable.expects('import').once().withArgs().callsArgWith(1, null,
@@ -449,7 +450,13 @@ describe('import Tests', function() {
       2, null, job, 0);
 
     // Call the real module
-    bqUtils.import(bqClient, gcsFile, datasetName, tableName, timeout,
+    bqUtils.import(
+      bqClient,
+      gcsFile,
+      datasetName,
+      tableName,
+      schema,
+      timeout,
       callback);
 
     utilsMock.verify();
@@ -561,7 +568,8 @@ describe('onFileArrived Tests', function() {
         return {
           'dataset': 'foobar_dataset',
           'table': 'foobar_table',
-          'job_timeout': 42 // Magic number just for this test
+          'job_timeout': 42, // Magic number just for this test
+          'schema': 'foobar_schema'
         }
       };
 
@@ -608,8 +616,8 @@ describe('onFileArrived Tests', function() {
         // This simulates expected behavior, but the actual test for this is elsewhere
         bqUtilsMock.expects('import').withArgs(bigquery, file,
             'foobar_dataset',
-            'foobar_table', 42)
-          .callsArgWith(5, null, job);
+            'foobar_table', 'foobar_schema', 42)
+          .callsArgWith(6, null, job);
 
         // Stub out the move method, we will test this elsewhere
         mutMock.expects('markAsProcessed').withArgs(file).callsArgWith(
@@ -645,8 +653,8 @@ describe('onFileArrived Tests', function() {
         // This simulates expected behavior, but the actual test for this is elsewhere
         bqUtilsMock.expects('import').withArgs(bigquery, file,
             'foobar_dataset',
-            'foobar_table', 42)
-          .callsArgWith(5, 'foobar_error', job);
+            'foobar_table', 'foobar_schema', 42)
+          .callsArgWith(6, 'foobar_error', job);
 
         // Stub out the move method, we will test this elsewhere
         mutStub = sinon.stub(mut, 'markAsProcessed').callsArgWith(
@@ -680,8 +688,8 @@ describe('onFileArrived Tests', function() {
         // This simulates expected behavior, but the actual test for this is elsewhere
         bqUtilsMock.expects('import').withArgs(bigquery, file,
             'foobar_dataset',
-            'foobar_table', 42)
-          .callsArgWith(5, null, job);
+            'foobar_table', 'foobar_schema', 42)
+          .callsArgWith(6, null, job);
 
         // Stub out the move method, we will test this elsewhere
         mutMock.expects('markAsProcessed').withArgs(file).callsArgWith(

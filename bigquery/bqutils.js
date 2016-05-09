@@ -5,8 +5,8 @@ var logger = require('./logger.js');
 var self = {
 
 	// Imports a GCS file into bigquery
-	'import': function(bqClient, gcsFile, strDatasetName, strTableName, timeout,
-		callback) {
+	'import': function(bqClient, gcsFile, strDatasetName, strTableName, strSchema,
+		timeout, callback) {
 
 		self.getOrCreateDataset(bqClient, strDatasetName, function(err, dataset) {
 			if (err) {
@@ -14,7 +14,8 @@ var self = {
 				return;
 			}
 
-			self.getOrCreateTable(dataset, strTableName, function(err, table) {
+			self.getOrCreateTable(dataset, strTableName, strSchema, function(err,
+				table) {
 				if (err) {
 					callback(err);
 					return;

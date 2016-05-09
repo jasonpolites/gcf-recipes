@@ -9,6 +9,9 @@
  - Reading and Writing with [Google Cloud Datastore](/datastore)
  - Exporting data to [Google Cloud BigQuery](/bigquery)
 
+## Notes on deployment
+If you have a large number of dependencies in your `package.json` file and you run `npm install` locally, you may find deployments to be slow because you will be deploying your fully-materialized `node_modules` folder.  If you don't have any private modules in your `node_modules` folder we recommend you `rm -rf node_modules` prior to invoking `deploy`
+
 *Coming Soon...*
 
  - Processing Cloud Logging events

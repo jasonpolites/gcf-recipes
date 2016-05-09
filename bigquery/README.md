@@ -63,3 +63,17 @@ You should see this result:
 | Doomslayer (New Earth)    | 2011 |
 +---------------------------+------+
 ```
+
+#### Running Tests
+This recipe comes with a suite of unit tests.  To run the tests locally, just use `npm test`
+
+```
+npm install
+npm test
+```
+
+The tests will also produce code coverage reports, written to the `/coverage` directory.  After running the tests, you can view coverage with
+
+```
+open coverage/lcov-report/index.html 
+```

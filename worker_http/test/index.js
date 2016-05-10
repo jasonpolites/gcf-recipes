@@ -5,7 +5,7 @@ var proxyquire = require('proxyquire').noCallThru();
 
 var SHARED_KEY = 'some_random_high_entropy_string';
 
-describe('Master Worker Tests', function() {
+describe('Master Worker Tests - HTTP', function() {
 
   it('Verifies that failure is called without a valid shared key', function() {
     var mut = require('../index.js');

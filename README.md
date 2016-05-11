@@ -1,3 +1,5 @@
+![](https://travis-ci.org/jasonpolites/gcf-recipes.svg?branch=master)
+
 # Google Cloud Functions Recipes (Unofficial)
 
  - Publishing messages to [Google Cloud Pub/Sub](/pubsub)

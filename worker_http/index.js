@@ -3,6 +3,10 @@ var gcloud = require('gcloud');
 // Promise-compartible request module.
 var req = require('request-promise');
 
+// Use our logging utilty just as a convenience to skip 
+// console logs during tests
+var logger = require('./logger');
+
 // Use a simple shared key to assert calling authority.
 var SHARED_KEY = 'some_random_high_entropy_string';
 
@@ -30,8 +34,8 @@ var worker = function(context, data) {
     count += line.split(/\s+/).length;
   }
 
-  // console.log(
-  // 'Total [' + count + '] words in batch of size [' + batch.length + ']');
+  logger.log(
+    'Total [' + count + '] words in batch of size [' + batch.length + ']');
 
   context.success(count + '');
 };
@@ -54,7 +58,7 @@ var master = function(context, data) {
   var bucket = gcs.bucket(data['bucket']);
 
   // Load the master file using the stream API
-  console.log(
+  logger.log(
     'Opening file [' + data['file'] + '] and creating a read stream...');
   var inStream = bucket.file(data['file']).createReadStream()
     .on('error', function(err) {
@@ -64,7 +68,7 @@ var master = function(context, data) {
     });
 
   // use the readLine module to read the stream line-by line
-  console.log('Got stream, reading file line-by-line...');
+  logger.log('Got stream, reading file line-by-line...');
   var lineReader = require('readline').createInterface({
     input: inStream
   });
@@ -95,7 +99,7 @@ var master = function(context, data) {
 
     Promise.all(promises).then(
       function(result) {
-        console.log('All workers have returned');
+        logger.log('All workers have returned');
         // The result will be an array of return values from the workers.
         var count = 0;
         for (var i = 0; i < result.length; ++i) {
@@ -107,7 +111,7 @@ var master = function(context, data) {
 
       },
       function(err) {
-        console.error(err);
+        logger.error(err);
         context.failure(err);
       });
   });

@@ -1,5 +1,9 @@
 var gcloud = require('gcloud');
 
+// Use our logging utilty just as a convenience to skip 
+// console logs during tests
+var logger = require('./logger');
+
 module.exports = {
 
   /**
@@ -23,7 +27,7 @@ module.exports = {
       return;
     }
 
-    console.log('Publishing message to topic ' + topicName);
+    logger.log('Publishing message to topic ' + topicName);
 
     // Create a pubsub client.
     var pubsub = gcloud.pubsub({
@@ -42,6 +46,7 @@ module.exports = {
       },
       function(err) {
         if (err) {
+          logger.error(err);
           context.failure(err);
         } else {
           context.success('Message published');
@@ -54,7 +59,7 @@ module.exports = {
    */
   subscribe: function(context, data) {
     // We're just going to log the message to prove that it worked!
-    console.log(data['message']);
+    logger.log(data['message']);
 
     // Don't forget to call success!
     context.success();

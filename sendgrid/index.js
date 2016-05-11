@@ -1,3 +1,7 @@
+// Use our logging utilty just as a convenience to skip 
+// console logs during tests
+var logger = require('./logger');
+
 module.exports = {
   sendEmail: function(context, data) {
     // Using SendGrid's Node.js Library https://github.com/sendgrid/sendgrid-nodejs
@@ -10,11 +14,11 @@ module.exports = {
       text: data['body']
     };
 
-    console.log('Sending email to: ' + data['to'] + '...');
+    logger.log('Sending email to: ' + data['to'] + '...');
 
     sendgrid.send(payload, function(err, json) {
       if (err) {
-        console.error(err);
+        logger.error(err);
         context.failure(err);
       } else {
         context.success(json);

@@ -171,21 +171,35 @@ describe('Cloud Pub/Sub Tests', function() {
       mut.publish(context, data);
     });
 
-  it('Prints message to console in subscribe', function() {
+  describe('Console Tests', function() {
 
-    mockContext.expects('success').once();
+    before(function() {
+      // Revert the logger because console.log is skipped for tests
+      process.env['NODE_ENV'] = 'prod'
+    });
 
-    // Stub out console.log
-    var consoleStub = sinon.stub(console, 'log');
+    after(function() {
+      process.env['NODE_ENV'] = 'test'
+      if (console.log.restore) {
+        console.log.restore();
+      }
+    });
 
-    var data = {
-      'message': 'foobar_message'
-    };
+    it('Prints message to console in subscribe', function() {
 
-    mut.subscribe(context, data);
+      mockContext.expects('success').once();
 
-    mockContext.verify();
-    sinon.assert.calledWith(consoleStub, 'foobar_message');
-    console.log.restore();
+      // Stub out console.log
+      var consoleStub = sinon.stub(console, 'log');
+
+      var data = {
+        'message': 'foobar_message'
+      };
+
+      mut.subscribe(context, data);
+
+      mockContext.verify();
+      sinon.assert.calledWith(consoleStub, 'foobar_message');
+    });
   });
 });

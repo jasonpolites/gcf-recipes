@@ -1,5 +1,9 @@
 var gcloud = require('gcloud');
 
+// Use our logging utilty just as a convenience to skip 
+// console logs during tests
+var logger = require('./logger');
+
 // Keep a reference to the datastore client
 // This is OK because the function is stateless
 var datastore = null;
@@ -18,14 +22,14 @@ var set = function(context, data) {
 
   _getKeyFromData(data, function(err, k) {
     if (err) {
-      console.error(err);
+      logger.error(err);
       context.failure(err);
       return;
     }
 
     _saveEntity(k, value, function(err) {
       if (err) {
-        console.error(err);
+        logger.error(err);
         context.failure(err);
       } else {
         context.success('Entity saved');
@@ -38,7 +42,7 @@ var get = function(context, data) {
 
   _getEntity(data, function(err, dsKey, entity) {
     if (err) {
-      console.error(err);
+      logger.error(err);
       context.failure(err);
       return;
     }
@@ -55,7 +59,7 @@ var get = function(context, data) {
 var del = function(context, data) {
   _getKeyFromData(data, function(err, k) {
     if (err) {
-      console.error(err);
+      logger.error(err);
       context.failure(err);
       return;
     }
@@ -63,7 +67,7 @@ var del = function(context, data) {
     var ds = _getDSClient();
     ds.delete(k, function(err, apiResp) {
       if (err) {
-        console.error(err);
+        logger.error(err);
         context.failure(err);
       } else {
         context.success('Entity deleted');

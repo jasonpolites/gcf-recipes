@@ -4,7 +4,7 @@
   "description": "Google Cloud Functions Recipes",
   "scripts": {
     "preversion": "npm test",
-    "unit": "mocha --recursive **/test/**",
+    "unit": "NODE_ENV=test mocha --recursive **/test/**",
     "test": "npm run unit"
   },
   "keywords": [

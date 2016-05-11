@@ -1,6 +1,6 @@
 // Use our logging utilty just as a convenience to skip 
 // console logs during tests
-var logger = require('./logger.js');
+var logger = require('./logger');
 
 var self = {
 
@@ -85,7 +85,7 @@ var self = {
           'schema': strSchema
         };
 
-        console.log('Creating table with schema ' + options.schema)
+        logger.log('Creating table with schema ' + options.schema)
 
         dataset.createTable(strTableName, options, function(err,
           table, apiResponse) {

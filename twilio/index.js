@@ -1,3 +1,7 @@
+// Use our logging utilty just as a convenience to skip 
+// console logs during tests
+var logger = require('./logger');
+
 module.exports = {
   sendSms: function(context, data) {
 
@@ -6,7 +10,7 @@ module.exports = {
     var authToken = data['auth_token'];
     var client = require('twilio')(accountSid, authToken);
 
-    console.log('Sending sms to: ' + data['to']);
+    logger.log('Sending sms to: ' + data['to']);
 
     client.messages.create({
       body: data['message'],
@@ -14,7 +18,7 @@ module.exports = {
       from: data['from']
     }, function(err, message) {
       if (err) {
-        console.error(err);
+        logger.error(err);
         context.failure(err);
       } else {
         context.success(message);

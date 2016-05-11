@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Google Cloud Functions Recipes",
   "scripts": {
+    "preinstall": "node preinstall.js",
     "preversion": "npm test",
     "unit": "NODE_ENV=test mocha --recursive **/test/**",
     "test": "npm run unit"

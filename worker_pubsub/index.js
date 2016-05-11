@@ -39,6 +39,7 @@ var self = {
       }
     }, function(err) {
       if (err) {
+        logger.error(err);
         context.failure(err);
         return;
       }
@@ -117,6 +118,7 @@ var self = {
     // Load the master file using the stream API
     var inStream = gcsFile.createReadStream()
       .on('error', function(err) {
+        logger.error(err);
         callback(err);
         return;
       });
@@ -157,11 +159,13 @@ var self = {
       // Wait for all promises to return
       Promise.all(promises).then(
         function(result) {
-          logger.log('All batches have been published');
+          logger.log('All batches [' + result.length +
+            '] have been published');
           // The result will be an array of return values from the workers.
           callback(null, result.length);
         },
         function(err) {
+          logger.error(err);
           callback(err);
         });
     });
@@ -225,6 +229,7 @@ var self = {
         var returned = {};
 
         var onError = function(err) {
+          logger.error(err);
           callback(err);
           return;
         };

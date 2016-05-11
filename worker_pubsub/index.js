@@ -1,5 +1,8 @@
 var gcloud = require('gcloud');
 
+// Override logging to easily omit logs during tests
+var logger = require('./logger');
+
 var self = {
 
   /**
@@ -26,7 +29,7 @@ var self = {
 
     var outTopic = pubsub.topic(data['out-topic']);
 
-    console.log('Worker ' + data['worker'] + ' reporting total count of ' +
+    logger.log('Worker ' + data['worker'] + ' reporting total count of ' +
       count + ' in batch of size [' + batch.length + ']');
 
     outTopic.publish({
@@ -76,7 +79,7 @@ var self = {
       function(err, count) {
 
         if (err) {
-          console.error(err);
+          logger.error(err);
           context.failure(err);
           return;
         }
@@ -88,7 +91,7 @@ var self = {
         self._receiveResults(outTopic, count, function(err, result) {
 
           if (err) {
-            console.error(err);
+            logger.error(err);
             context.failure(err);
             return;
           }
@@ -109,6 +112,8 @@ var self = {
    */
   '_onProcessFile': function(gcsFile, topic, strOutTopic, batchSize, callback) {
 
+    const readLine = require('readline');
+
     // Load the master file using the stream API
     var inStream = gcsFile.createReadStream()
       .on('error', function(err) {
@@ -117,7 +122,7 @@ var self = {
       });
 
     // use the readLine module to read the stream line-by line
-    var lineReader = require('readline').createInterface({
+    var lineReader = readLine.createInterface({
       input: inStream
     });
 
@@ -152,7 +157,7 @@ var self = {
       // Wait for all promises to return
       Promise.all(promises).then(
         function(result) {
-          console.log('All batches have been published');
+          logger.log('All batches have been published');
           // The result will be an array of return values from the workers.
           callback(null, result.length);
         },
@@ -172,7 +177,7 @@ var self = {
    */
   '_publishBatch': function(topic, batch, strOutTopic, workerId) {
     return new Promise(function(resolve, reject) {
-      console.log('Sending batch of ' + batch.length +
+      logger.log('Sending batch of ' + batch.length +
         ' lines to worker worker' + workerId);
 
       topic.publish({
@@ -206,54 +211,53 @@ var self = {
     };
 
     // The subscription name can be anything, we're going to re-use it.
-    topic.subscribe('mapr-pubsub-subscription', options, function(
-      err,
-      subscription) {
+    topic.subscribe('mapr-pubsub-subscription', options,
+      function(err, subscription) {
 
-      if (err) {
-        callback(err);
-        return;
-      }
-
-      var words = 0;
-
-      // Track returned workers to avoid duplicates
-      var returned = {};
-
-      var onError = function(err) {
-        callback(err);
-        return;
-      };
-
-      var onMessage = function(message) {
-
-        var worker = message['data']['worker'];
-
-        console.log('Got count of ' + message['data']['count'] +
-          ' from worker ' + worker);
-
-        if (returned[worker] !== true) {
-          count--;
-          returned[worker] = true;
-          words += parseInt(message['data']['count']);
-
-          if (count === 0) {
-            // Remove listeners to stop pulling for messages.
-            subscription.removeListener('message', onMessage);
-            subscription.removeListener('error', onError);
-            callback(null, words);
-          }
-        } else {
-          console.log('Received duplicate result from worker ' +
-            worker);
+        if (err) {
+          callback(err);
+          return;
         }
-      };
 
-      // Register listeners to start pulling for messages.
-      subscription.on('error', onError);
-      subscription.on('message', onMessage);
-    });
-  }
+        var words = 0;
+
+        // Track returned workers to avoid duplicates
+        var returned = {};
+
+        var onError = function(err) {
+          callback(err);
+          return;
+        };
+
+        var onMessage = function(message) {
+
+          var worker = message['data']['worker'];
+
+          logger.log('Got count of ' + message['data']['count'] +
+            ' from worker ' + worker);
+
+          if (returned[worker] !== true) {
+            count--;
+            returned[worker] = true;
+            words += parseInt(message['data']['count']);
+
+            if (count === 0) {
+              // Remove listeners to stop pulling for messages.
+              subscription.removeListener('message', onMessage);
+              subscription.removeListener('error', onError);
+              callback(null, words);
+            }
+          } else {
+            logger.log('Received duplicate result from worker ' +
+              worker);
+          }
+        };
+
+        // Register listeners to start pulling for messages.
+        subscription.on('error', onError);
+        subscription.on('message', onMessage);
+      });
+  },
 };
 
 module.exports = self;

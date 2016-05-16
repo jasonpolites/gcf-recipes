@@ -25,3 +25,4 @@ If you have a large number of dependencies in your `package.json` file and you r
   - Validating JSON Web Tokens (JWTs)
  - Sending messages to a Slack channel
  - Making payments with Stripe
+ - Executing algorithms in Algorithmia.io

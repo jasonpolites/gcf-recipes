@@ -1,0 +1,31 @@
+{
+  "name": "gcf-recipe-ocr",
+  "version": "1.0.0",
+  "description": "Google Cloud Functions Recipes - OCR with Cloud Vision & Translate",
+  "main": "index.js",
+  "scripts": {
+    "preversion": "npm test",
+    "unit": "NODE_ENV=test istanbul cover -x logger.js _mocha test/ --recursive",
+    "test": "npm run unit"
+  },
+  "keywords": [
+    "cloud",
+    "functions",
+    "gcp",
+    "gcf",
+    "ocr",
+    "translate"
+    "vision"
+  ],
+  "author": "Jason Polites",
+  "dependencies": {
+    "gcloud": "^0.30.2"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "istanbul": "^0.4.3",
+    "mocha": "^2.4.5",
+    "proxyquire": "^1.7.7",
+    "sinon": "^1.17.3"
+  }
+}

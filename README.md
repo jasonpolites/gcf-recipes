@@ -1,4 +1,4 @@
-![](https://travis-ci.org/jasonpolites/gcf-recipes.svg?branch=master)
+[![](https://travis-ci.org/jasonpolites/gcf-recipes.svg?branch=master)](https://travis-ci.org/jasonpolites/gcf-recipes)
 
 # Google Cloud Functions Recipes (Unofficial)
 

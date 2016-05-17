@@ -2,204 +2,319 @@ var chai = require('chai');
 var sinon = require('sinon');
 var proxyquire = require('proxyquire').noCallThru();
 
-describe('Cloud Pub/Sub Tests', function() {
+describe('OCR Tests', function() {
 
-  var mut = require('../index.js');
-  var gcloud = require('gcloud');
+  var
+    sandbox,
+    mut,
+    context,
+    contextMock,
+    mutMock,
+    gcloud,
+    gcloudObj,
+    config,
+    configObj,
+    vision,
+    translate,
+    storage,
+    bucket,
+    pubsub,
+    file;
 
-  var context = {
+  // gcloud = require('gcloud');
+
+  sandbox = sinon.sandbox.create();
+
+  context = {
     success: function(val) {},
-    failure: function(val) {}
+    failure: function(val) {},
+    done: function() {}
   };
 
-  var mockContext;
+  // Dummy config
+  configObj = {
+    result_topic: 'foobar_result_topic',
+    translate_topic: 'foobar_translate_topic',
+    result_bucket: 'foobar_result_bucket',
+    translate_key: 'foobar_translate_key',
+    translate: false,
+    to_lang: 'foobar_to_lang'
+  };
+  config = function() {
+    return configObj;
+  };
+
+  gcloudObj = {
+    'storage': function() {},
+    'vision': function() {},
+    'pubsub': function() {},
+    'translate': function() {}
+  }
+
+  storage = {
+    'bucket': function() {}
+  };
+  bucket = {
+    'file': function() {}
+  };
+  file = {
+    'name': 'foobar_file'
+  };
+  vision = {
+    'detectText': function() {}
+  };
+  translate = {
+    'detect': function() {}
+  };
+  pubsub = {};
 
   beforeEach(function() {
-    mockContext = sinon.mock(context);
+    contextMock = sandbox.mock(context);
+    gcloud = sandbox.stub().returns(gcloudObj);
+
+    sandbox.stub(gcloudObj, 'storage').returns(storage);
+    sandbox.stub(gcloudObj, 'vision').returns(vision);
+    sandbox.stub(gcloudObj, 'pubsub').returns(pubsub);
+    sandbox.stub(gcloudObj, 'translate').returns(translate);
+
+    sandbox.stub(storage, 'bucket').returns(bucket);
+    sandbox.stub(bucket, 'file').returns(file);
+
+    var stubs = {
+      'gcloud': gcloud,
+      './config.js': config
+    };
+
+    // Require the module under test and stub out dependencies
+    mut = proxyquire('../index.js', stubs);
   });
 
   afterEach(function() {
-    mockContext.restore();
-    if (gcloud.pubsub.restore) {
-      gcloud.pubsub.restore();
-    }
+    sandbox.restore();
   });
 
-  it('Publish fails without a topic', function() {
-
-    mockContext.expects('failure').once().withArgs(
-      'Topic not provided. Make sure you have a \'topic\' property in your request'
-    );
-
-    var data = {
-      'message': 'foobar_message'
-    };
-
-    mut.publish(context, data);
-
-    mockContext.verify();
-  });
-
-  it('Publish fails without a message', function() {
-
-    mockContext.expects('failure').once().withArgs(
-      'Message not provided. Make sure you have a \'message\' property in your request'
-    );
-
-    var data = {
-      'topic': 'foobar_topic'
-    };
-
-    mut.publish(context, data);
-
-    mockContext.verify();
-
-  });
-
-  it('Publishes the message to the topic and calls success', function(done) {
-
-    // Data can be anything, our mocks will load a mock file no matter what
-    var data = {
-      'topic': 'foobar_topic',
-      'message': 'foobar_message'
-    };
-
-    // This is the argument we expect to see published
-    var expectedArg = {
-      data: {
-        message: data['message'],
-      },
-    }
-
-    // Stub out gcloud storage so we can return our dummy file stream
-    var pubsub = {
-      'topic': function() {}
-    };
-    var topic = {
-      'publish': function() {}
-    };
-
-    sinon.stub(gcloud, 'pubsub').returns(pubsub);
-    var pubsubStub = sinon.stub(pubsub, 'topic').returns(topic);
-    var topicStub = sinon.stub(topic, 'publish').callsArg(1);
-
-    // Create a mock context object that will also contain our assertions in the callback
-    var context = {
-      success: function(val) {
-        try {
-
-          // Assert that the properties of the data object were correctly used to
-          // load the file
-          sinon.assert.calledWith(pubsubStub, 'foobar_topic');
-          sinon.assert.calledWith(topicStub, expectedArg);
-
-          chai.expect(val).to.equal('Message published');
-
-          done();
-
-        } catch (e) {
-          done(e);
-        }
-      },
-      failure: function(err) {
-        done(err);
-      }
-    };
-
-    // We need the module to load our mocked versions
-    // Use proxyquire to shim in the stubs
-    var stubs = {
-      'gcloud': gcloud
-    };
-
-    // Require the module under test and stub out gcloud
-    var mut = proxyquire('../index.js', stubs);
-
-    // Now call the module under test.  Assertions will happen in the callback, 
-    // and the test will timeout if the callback is not called.
-    mut.publish(context, data);
-  });
-
-  it('Fails to publish the message to the topic and calls failure',
-    function(done) {
-
-      // Data can be anything, our mocks will load a mock file no matter what
+  describe('Testing ocrGCS', function() {
+    it('Returns immediately for delete events', function() {
+      // We expect that the function returns immediately if the notification 
+      // corresponds to a deleted file.
       var data = {
-        'topic': 'foobar_topic',
-        'message': 'foobar_message'
+        'timeDeleted': new Date()
       };
 
-      // Stub out gcloud storage so we can return our dummy file stream
-      var pubsub = {
-        'topic': function() {}
-      };
-      var topic = {
-        'publish': function() {}
-      };
+      var ocrStub = sandbox.stub(mut, '_ocr').throws(
+        new Error('Unexpected call to _ocr'));
 
-      sinon.stub(gcloud, 'pubsub').returns(pubsub);
-      var pubsubStub = sinon.stub(pubsub, 'topic').returns(topic);
-      var topicStub = sinon.stub(topic, 'publish').callsArgWith(1,
-        'foobar_error');
+      contextMock.expects('done').once();
 
-      // Create a mock context object that will also contain our assertions in the callback
-      var context = {
-        success: function(val) {
-          done('Success was not expected');
-        },
-        failure: function(err) {
-          try {
-            chai.expect(err).to.equal('foobar_error');
-            done();
-          } catch (e) {
-            done(e);
-          }
-        }
-      };
+      mut.ocrGCS(context, data);
 
-      // We need the module to load our mocked versions
-      // Use proxyquire to shim in the stubs
-      var stubs = {
-        'gcloud': gcloud
-      };
-
-      // Require the module under test and stub out gcloud
-      var mut = proxyquire('../index.js', stubs);
-
-      // Now call the module under test.  Assertions will happen in the callback, 
-      // and the test will timeout if the callback is not called.
-      mut.publish(context, data);
+      contextMock.verify();
     });
 
-  describe('Console Tests', function() {
-
-    before(function() {
-      // Revert the logger because console.log is skipped for tests
-      process.env['NODE_ENV'] = 'prod'
-    });
-
-    after(function() {
-      process.env['NODE_ENV'] = 'test'
-      if (console.log.restore) {
-        console.log.restore();
-      }
-    });
-
-    it('Prints message to console in subscribe', function() {
-
-      mockContext.expects('success').once();
-
-      // Stub out console.log
-      var consoleStub = sinon.stub(console, 'log');
-
+    it('Calls _ocr with correct data arguments', function() {
       var data = {
-        'message': 'foobar_message'
+        'bucket': 'foobar_bucket',
+        'name': 'foobar_name'
       };
 
-      mut.subscribe(context, data);
+      var mutMock = sandbox.mock(mut);
 
-      mockContext.verify();
-      sinon.assert.calledWith(consoleStub, 'foobar_message');
+      mutMock.expects('_ocr').once().withArgs({
+        'image': file,
+        'filename': 'foobar_name'
+      }).callsArg(1);
+
+      contextMock.expects('done').once().withExactArgs(undefined);
+
+      mut.ocrGCS(context, data);
+
+      contextMock.verify();
+      mutMock.verify();
     });
+  });
+
+  describe('Testing ocrHTTP', function() {
+    it('Calls _ocr with correct data arguments', function() {
+      var data = {
+        'filename': 'foobar_name',
+        'image': 'foobar_image'
+      };
+
+      var mutMock = sandbox.mock(mut);
+
+      mutMock.expects('_ocr').once().withArgs(data).callsArg(1);
+
+      contextMock.expects('done').once().withExactArgs(undefined);
+
+      mut.ocrHTTP(context, data);
+
+      contextMock.verify();
+      mutMock.verify();
+    });
+  });
+
+  describe('Testing _ocr', function() {
+
+    it('Call fails without an image', function() {
+
+      var callback = sinon.mock();
+
+      callback.once().withArgs(
+        'Image reference not provided. Make sure you have a \'image\' property in ' +
+        'your request expressed as a URL or a cloud storage location'
+      );
+
+      mut._ocr({}, callback);
+
+      callback.verify();
+    });
+
+    it(
+      'Calls the vision API and publishes results but does not call translate if config for translate is false',
+      function() {
+
+        var
+          image = 'foobar_image',
+          text = 'foobar text',
+          filename = 'foobar_file'
+
+        var data = {
+          image: image
+        };
+
+        var expectedData = {
+          filename: filename,
+          text: text
+        }
+
+        var mutMock = sandbox.mock(mut);
+        var visionMock = sandbox.mock(vision);
+        var translateMock = sandbox.mock(translate);
+        var callback = sinon.stub();
+
+        // Mock out the _getFileName method, we'll test that elsewhere
+        mutMock.expects('_getFileName').withExactArgs(image)
+          .returns(filename);
+
+        // Mock out the _publishResult method, we'll test that elsewhere
+        mutMock.expects('_publishResult').withExactArgs(
+          'foobar_result_topic', expectedData, callback);
+
+        visionMock.expects('detectText').withArgs(image)
+          .callsArgWith(
+            1, null, text);
+
+        translateMock.expects('detect').never();
+
+        mut._ocr(data, callback);
+
+        visionMock.verify();
+        mutMock.verify();
+        translateMock.verify();
+      });
+
+    it(
+      'Calls the vision API AND the translate API and publishes results to the translate topic for non English detection',
+      function() {
+
+        // Ensure config has translate set to true
+        configObj.translate = true;
+
+        var
+          image = 'foobar_image',
+          text = 'foobar text',
+          filename = 'foobar_file',
+          results = [{
+            language: 'es'
+          }]
+
+        var data = {
+          image: image
+        };
+
+        var expectedData = {
+          filename: filename,
+          text: text
+        }
+
+        var mutMock = sandbox.mock(mut);
+        var visionMock = sandbox.mock(vision);
+        var translateMock = sandbox.mock(translate);
+        var callback = sinon.stub();
+
+        // Mock out the _getFileName method, we'll test that elsewhere
+        mutMock.expects('_getFileName').withExactArgs(image)
+          .returns(filename);
+
+        visionMock.expects('detectText').withArgs(image)
+          .callsArgWith(
+            1, null, text);
+
+        translateMock.expects('detect').withArgs(text).callsArgWith(
+          1, null, results)
+
+        // Mock out the _publishResult method, we'll test that elsewhere
+        mutMock.expects('_publishResult').withExactArgs(
+          'foobar_translate_topic', expectedData, callback);
+
+        mut._ocr(data, callback);
+
+        translateMock.verify();
+        visionMock.verify();
+        mutMock.verify();
+      });
+
+    it(
+      'Calls the vision API AND the translate API and publishes results to the result topic for English detection',
+      function() {
+
+        // Ensure config has translate set to true
+        configObj.translate = true;
+
+        var
+          image = 'foobar_image',
+          text = 'foobar text',
+          filename = 'foobar_file',
+          results = [{
+            language: 'es'
+          }, {
+            language: 'en'
+          }]
+
+        var data = {
+          image: image
+        };
+
+        var expectedData = {
+          filename: filename,
+          text: text
+        }
+
+        var mutMock = sandbox.mock(mut);
+        var visionMock = sandbox.mock(vision);
+        var translateMock = sandbox.mock(translate);
+        var callback = sinon.stub();
+
+        // Mock out the _getFileName method, we'll test that elsewhere
+        mutMock.expects('_getFileName').withExactArgs(image)
+          .returns(filename);
+
+        visionMock.expects('detectText').withArgs(image)
+          .callsArgWith(
+            1, null, text);
+
+        translateMock.expects('detect').withArgs(text).callsArgWith(
+          1, null, results)
+
+        // Mock out the _publishResult method, we'll test that elsewhere
+        mutMock.expects('_publishResult').withExactArgs(
+          'foobar_result_topic', expectedData, callback);
+
+        mut._ocr(data, callback);
+
+        translateMock.verify();
+        visionMock.verify();
+        mutMock.verify();
+      });
   });
 });

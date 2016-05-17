@@ -583,7 +583,6 @@ describe('onFileArrived Tests', function() {
       mut = proxyquire('../index.js', stubs);
 
       mutMock = sinon.mock(mut);
-
     });
 
     afterEach(function() {

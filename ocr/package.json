@@ -14,7 +14,7 @@
     "gcp",
     "gcf",
     "ocr",
-    "translate"
+    "translate",
     "vision"
   ],
   "author": "Jason Polites",

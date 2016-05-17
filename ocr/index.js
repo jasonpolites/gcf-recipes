@@ -150,7 +150,7 @@ var self = {
           'filename': filename
         };
 
-      _publishResult(strTopicName, data, function(err) {
+      self._publishResult(strTopicName, data, function(err) {
         if (err) {
           logger.error(err);
           context.failure(err);
@@ -195,8 +195,19 @@ var self = {
   // Gets or creates a pubsub topic
   _getOrCreateTopic: function(strTopic, callback) {
     var pubsub = gcloud.pubsub();
-    pubsub.createTopic(strTopic, function(err, topic, apiResponse) {
-      callback(err, topic);
+    var topic = pubsub.topic(strTopic);
+    topic.exists(function(err, exists) {
+      if (err) {
+        callback(err);
+        return;
+      }
+      if (exists !== true) {
+        pubsub.createTopic(strTopic, function(err, topic, apiResponse) {
+          callback(err, topic);
+        });
+      } else {
+        callback(null, topic);
+      }
     });
   },
 
@@ -213,7 +224,7 @@ var self = {
    * Publishes the result to the given pubsub topic
    */
   _publishResult: function(strTopicName, data, callback) {
-    _getOrCreateTopic(strTopicName, function(err, topic) {
+    self._getOrCreateTopic(strTopicName, function(err, topic) {
       if (err) {
         callback(err);
         return;

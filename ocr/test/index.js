@@ -64,7 +64,8 @@ describe('OCR Tests', function() {
     'detectText': function() {}
   };
   translate = {
-    'detect': function() {}
+    'detect': function() {},
+    'translate': function() {}
   };
   pubsub = {};
 

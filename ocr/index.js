@@ -93,8 +93,6 @@ var self = {
 
         translate.detect(text, function(err, results) {
 
-          console.log('In detect with err ' + err);
-
           if (err) {
             callback(err);
             return;

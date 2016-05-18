@@ -1,0 +1,14 @@
+{
+  "name": "setup",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "Jason Polites",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^2.0.0-rc.5",
+    "gcloud": "^0.33.0",
+    "minimist": "^1.2.0",
+    "string-template": "^1.0.0"
+  }
+}

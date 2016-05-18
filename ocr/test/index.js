@@ -19,7 +19,16 @@ describe('OCR Tests', function() {
     storage,
     bucket,
     pubsub,
-    file;
+    topic,
+    topicStub,
+    visionStub,
+    translateStub,
+    storageStub,
+    bucketStub,
+    pubsubStub,
+    fileStub,
+    file,
+    url;
 
   // gcloud = require('gcloud');
 
@@ -40,50 +49,62 @@ describe('OCR Tests', function() {
     translate: false,
     to_lang: 'foobar_to_lang'
   };
+
   config = function() {
     return configObj;
   };
 
   gcloudObj = {
-    'storage': function() {},
-    'vision': function() {},
-    'pubsub': function() {},
-    'translate': function() {}
+    storage: function() {},
+    vision: function() {},
+    pubsub: function() {},
+    translate: function() {}
   }
 
   storage = {
-    'bucket': function() {}
+    bucket: function() {}
   };
   bucket = {
-    'file': function() {}
+    file: function() {}
   };
   file = {
-    'name': 'foobar_file'
+    name: 'foobar_file',
+    save: function() {}
   };
   vision = {
-    'detectText': function() {}
+    detectText: function() {}
   };
   translate = {
-    'detect': function() {},
-    'translate': function() {}
+    detect: function() {},
+    translate: function() {}
   };
-  pubsub = {};
+  pubsub = {
+    topic: function() {},
+    createTopic: function() {}
+  };
+  topic = {
+    exists: function() {}
+  };
+  url = {
+    parse: function() {}
+  };
 
   beforeEach(function() {
     contextMock = sandbox.mock(context);
     gcloud = sandbox.stub().returns(gcloudObj);
 
-    sandbox.stub(gcloudObj, 'storage').returns(storage);
-    sandbox.stub(gcloudObj, 'vision').returns(vision);
-    sandbox.stub(gcloudObj, 'pubsub').returns(pubsub);
-    sandbox.stub(gcloudObj, 'translate').returns(translate);
-
-    sandbox.stub(storage, 'bucket').returns(bucket);
-    sandbox.stub(bucket, 'file').returns(file);
+    storageStub = sandbox.stub(gcloudObj, 'storage').returns(storage);
+    visionStub = sandbox.stub(gcloudObj, 'vision').returns(vision);
+    pubsubStub = sandbox.stub(gcloudObj, 'pubsub').returns(pubsub);
+    topicStub = sandbox.stub(pubsub, 'topic').returns(topic);
+    translateStub = sandbox.stub(gcloudObj, 'translate').returns(translate);
+    bucketStub = sandbox.stub(storage, 'bucket').returns(bucket);
+    fileStub = sandbox.stub(bucket, 'file').returns(file);
 
     var stubs = {
       'gcloud': gcloud,
-      './config.js': config
+      './config.js': config,
+      'url': url
     };
 
     // Require the module under test and stub out dependencies
@@ -317,5 +338,374 @@ describe('OCR Tests', function() {
         visionMock.verify();
         mutMock.verify();
       });
+  });
+
+  describe('Testing translate', function() {
+    it('Call fails without text', function() {
+
+      contextMock.expects('failure').once().withExactArgs('No text found in message');
+
+      // Ensure the function returns
+      var translateMock = sandbox.mock(translate);
+      translateMock.expects('translate').never();
+
+      mut.translate(context, {});
+
+      contextMock.verify();
+      translateMock.verify();
+    });
+
+    it('Call fails without filename', function() {
+
+      contextMock.expects('failure').once().withExactArgs('No filename found in message');
+
+      // Ensure the function returns
+      var translateMock = sandbox.mock(translate);
+      translateMock.expects('translate').never();
+
+      mut.translate(context, {
+        text: 'foobar'
+      });
+
+      contextMock.verify();
+      translateMock.verify();
+    });
+
+    it('Calls translate with correct arguments and publishes result to correct topic', function() {
+
+      var
+        text = 'foobar_text',
+        filename = 'foobar_filename',
+        translation = 'foobar_translation',
+        data = {
+          text: text,
+          filename: filename
+        },
+        expectedData = {
+          text: translation,
+          filename: filename
+        }
+
+      var translateMock = sandbox.mock(translate);
+      var mutMock = sandbox.mock(mut);
+
+      translateMock.expects('translate').once().withArgs(text, 'foobar_to_lang').callsArgWith(2, null, translation);
+      mutMock.expects('_publishResult').once().withArgs('foobar_result_topic', expectedData).callsArg(2);
+      contextMock.expects('success').once().withExactArgs('Text translated');
+
+      mut.translate(context, data);
+
+      contextMock.verify();
+      translateMock.verify();
+      mutMock.verify();
+    });
+
+    it('Reports error on context when translate fails', function() {
+
+      var
+        text = 'foobar_text',
+        filename = 'foobar_filename',
+        err = 'foobar_error',
+        data = {
+          text: text,
+          filename: filename
+        };
+
+      var translateMock = sandbox.mock(translate);
+      var mutMock = sandbox.mock(mut);
+
+      translateMock.expects('translate').once().withArgs(text, 'foobar_to_lang').callsArgWith(2, err);
+      mutMock.expects('_publishResult').never();
+      contextMock.expects('failure').once().withExactArgs(err);
+
+      mut.translate(context, data);
+
+      contextMock.verify();
+      translateMock.verify();
+      mutMock.verify();
+    });
+
+    it('Reports error on context when _publishResult fails', function() {
+
+      var
+        text = 'foobar_text',
+        filename = 'foobar_filename',
+        translation = 'foobar_translation',
+        err = 'foobar_error',
+        data = {
+          text: text,
+          filename: filename
+        },
+        expectedData = {
+          text: translation,
+          filename: filename
+        }
+
+      var translateMock = sandbox.mock(translate);
+      var mutMock = sandbox.mock(mut);
+
+      translateMock.expects('translate').once().withArgs(text, 'foobar_to_lang').callsArgWith(2, null, translation);
+      mutMock.expects('_publishResult').once().withArgs('foobar_result_topic', expectedData).callsArgWith(2, err);
+      contextMock.expects('failure').once().withExactArgs(err);
+
+      mut.translate(context, data);
+
+      contextMock.verify();
+      translateMock.verify();
+      mutMock.verify();
+    });
+  });
+
+  describe('Testing saveToGCS', function() {
+    it('Call fails without text', function() {
+
+      contextMock.expects('failure').once().withExactArgs('No text found in message');
+
+      mut.saveToGCS(context, {});
+
+      contextMock.verify();
+      sinon.assert.notCalled(storageStub);
+    });
+
+    it('Call fails without filename', function() {
+
+      contextMock.expects('failure').once().withExactArgs('No filename found in message');
+
+      mut.saveToGCS(context, {
+        text: 'foobar'
+      });
+
+      contextMock.verify();
+      sinon.assert.notCalled(storageStub);
+    });
+
+    it('Calls save with correct arguments and reports success', function() {
+
+      var
+        text = 'foobar_text',
+        filename = 'foobar_filename.jpg',
+        textfile = 'foobar_filename.txt',
+        data = {
+          text: text,
+          filename: filename
+        }
+
+      var fileMock = sandbox.mock(file);
+      var mutMock = sandbox.mock(mut);
+
+      fileMock.expects('save').once().withArgs(text).callsArg(1);
+      mutMock.expects('_renameImageForSave').once().withArgs('foobar_filename.jpg').returns(textfile);
+      contextMock.expects('success').once().withExactArgs('Text written to foobar_file');
+
+      mut.saveToGCS(context, data);
+
+      sinon.assert.calledOnce(storageStub);
+      sinon.assert.calledWith(bucketStub, 'foobar_result_bucket');
+      sinon.assert.calledWith(fileStub, textfile);
+
+      contextMock.verify();
+      fileMock.verify();
+      mutMock.verify();
+    });
+
+    it('Reports error to context on save failure', function() {
+
+      var
+        text = 'foobar_text',
+        filename = 'foobar_filename.jpg',
+        textfile = 'foobar_filename.txt',
+        err = 'foobar_error',
+        data = {
+          text: text,
+          filename: filename
+        }
+
+      var fileMock = sandbox.mock(file);
+      var mutMock = sandbox.mock(mut);
+
+      fileMock.expects('save').once().withArgs(text).callsArgWith(1, err);
+      mutMock.expects('_renameImageForSave').once().withArgs('foobar_filename.jpg').returns(textfile);
+      contextMock.expects('failure').once().withExactArgs(err);
+      contextMock.expects('success').never();
+
+      mut.saveToGCS(context, data);
+
+      sinon.assert.calledOnce(storageStub);
+      sinon.assert.calledWith(bucketStub, 'foobar_result_bucket');
+      sinon.assert.calledWith(fileStub, textfile);
+
+      contextMock.verify();
+      fileMock.verify();
+      mutMock.verify();
+    });
+  });
+
+  describe('Testing _renameImageForSave', function() {
+    it('Renames files correctly', function() {
+      var expectations = [
+        ['foo0', 'foo0.txt'],
+        ['foo1.bar', 'foo1.txt'],
+        ['foo2.bar.jpg', 'foo2.bar.txt'],
+        ['foo3.txt', 'foo3.txt']
+      ];
+      for (var i = 0; i < expectations.length; ++i) {
+        chai.expect(mut._renameImageForSave(expectations[i][0])).to.equal(expectations[i][1]);
+      }
+    });
+  });
+
+  describe('Testing _getFileName', function() {
+    it('Returns the correct filename', function() {
+      var val = 'foobar_val';
+      var def = 'foobar_default';
+      var expectations = [
+        ['http://foo.bar/a/b/foo0.txt', 'foo0.txt'],
+        ['http://foo.bar/a/b/foo0', 'foo0'],
+        ['http://foo.bar/a/b/', def]
+      ];
+
+      var urlMock = sandbox.mock(url);
+
+      for (var i = 0; i < expectations.length; ++i) {
+        urlMock.expects('parse').withArgs(val).returns({
+          'pathname': expectations[i][0]
+        });
+        chai.expect(mut._getFileName(val, def)).to.equal(expectations[i][1]);
+      }
+
+      urlMock.verify();
+    });
+  });
+
+  describe('Testing _getOrCreateTopic', function() {
+    it('Creates a topic when the chosen topic does not exist', function() {
+      var strTopic = 'foobar_topic';
+
+      var pubsubMock = sandbox.mock(pubsub);
+      var topicMock = sandbox.mock(topic);
+      var callbackStub = sinon.stub();
+
+      topicMock.expects('exists').callsArgWith(0, null, false);
+      pubsubMock.expects('createTopic').withArgs(strTopic).callsArgWith(1, null, topic);
+
+      mut._getOrCreateTopic(strTopic, callbackStub);
+
+      sinon.assert.calledWith(topicStub, strTopic);
+      sinon.assert.calledWith(callbackStub, null, topic);
+      sinon.assert.calledOnce(topicStub);
+      sinon.assert.calledOnce(callbackStub);
+
+      pubsubMock.verify();
+      topicMock.verify();
+    });
+
+    it('Does not create a topic when the chosen topic already exists', function() {
+      var strTopic = 'foobar_topic';
+
+      var pubsubMock = sandbox.mock(pubsub);
+      var topicMock = sandbox.mock(topic);
+      var callbackStub = sinon.stub();
+
+      topicMock.expects('exists').callsArgWith(0, null, true);
+      pubsubMock.expects('createTopic').never();
+
+      mut._getOrCreateTopic(strTopic, callbackStub);
+
+      sinon.assert.calledWith(topicStub, strTopic);
+      sinon.assert.calledWith(callbackStub, null, topic);
+      sinon.assert.calledOnce(topicStub);
+      sinon.assert.calledOnce(callbackStub);
+
+      pubsubMock.verify();
+      topicMock.verify();
+    });
+
+    it('Calls back with an error on exists check failure', function() {
+      var
+        strTopic = 'foobar_topic',
+        err = 'foobar_error',
+        pubsubMock = sandbox.mock(pubsub),
+        topicMock = sandbox.mock(topic),
+        callbackStub = sinon.stub();
+
+      topicMock.expects('exists').callsArgWith(0, err);
+      pubsubMock.expects('createTopic').never();
+
+      mut._getOrCreateTopic(strTopic, callbackStub);
+
+      sinon.assert.calledWith(topicStub, strTopic);
+      sinon.assert.calledWith(callbackStub, err);
+      sinon.assert.calledOnce(topicStub);
+      sinon.assert.calledOnce(callbackStub);
+
+      pubsubMock.verify();
+      topicMock.verify();
+    });
+
+    it('Calls back with an error on createTopic failure', function() {
+      var
+        strTopic = 'foobar_topic',
+        err = 'foobar_error',
+        pubsubMock = sandbox.mock(pubsub),
+        topicMock = sandbox.mock(topic),
+        callbackStub = sinon.stub();
+
+      topicMock.expects('exists').callsArgWith(0, null, false);
+      pubsubMock.expects('createTopic').withArgs(strTopic).callsArgWith(1, err);
+
+      mut._getOrCreateTopic(strTopic, callbackStub);
+
+      sinon.assert.calledWith(topicStub, strTopic);
+      sinon.assert.calledWith(callbackStub, err);
+      sinon.assert.calledOnce(topicStub);
+      sinon.assert.calledOnce(callbackStub);
+
+      pubsubMock.verify();
+      topicMock.verify();
+    });
+  });
+
+  describe('Testing _publishResult', function() {
+    it('Calls publish with correct data on success', function() {
+      var strTopic = 'foobar_topic';
+
+      var pubsubMock = sandbox.mock(pubsub);
+      var topicMock = sandbox.mock(topic);
+      var callbackStub = sinon.stub();
+
+      topicMock.expects('exists').callsArgWith(0, null, false);
+      pubsubMock.expects('createTopic').withArgs(strTopic).callsArgWith(1, null, topic);
+
+      mut._getOrCreateTopic(strTopic, callbackStub);
+
+      sinon.assert.calledWith(topicStub, strTopic);
+      sinon.assert.calledWith(callbackStub, null, topic);
+      sinon.assert.calledOnce(topicStub);
+      sinon.assert.calledOnce(callbackStub);
+
+      pubsubMock.verify();
+      topicMock.verify();
+    });
+
+    it('Calls back with error on topic creation failure', function() {
+      var strTopic = 'foobar_topic';
+
+      var pubsubMock = sandbox.mock(pubsub);
+      var topicMock = sandbox.mock(topic);
+      var callbackStub = sinon.stub();
+
+      topicMock.expects('exists').callsArgWith(0, null, true);
+      pubsubMock.expects('createTopic').never();
+
+      mut._getOrCreateTopic(strTopic, callbackStub);
+
+      sinon.assert.calledWith(topicStub, strTopic);
+      sinon.assert.calledWith(callbackStub, null, topic);
+      sinon.assert.calledOnce(topicStub);
+      sinon.assert.calledOnce(callbackStub);
+
+      pubsubMock.verify();
+      topicMock.verify();
+    });
   });
 });

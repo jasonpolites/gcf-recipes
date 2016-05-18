@@ -1,6 +1,7 @@
 var gcloud = require('gcloud')({
   // We're using the API from the same project as the Cloud Function.
-  projectId: process.env.GCP_PROJECT
+  projectId: process.env.GCP_PROJECT,
+  keyFilename: __dirname + '/keyfile.json'
 });
 
 // Use our logging utilty just as a convenience to skip 
@@ -146,7 +147,7 @@ var self = {
       var
         strTopicName = config['result_topic'],
         data = {
-          'text': text,
+          'text': translation,
           'filename': filename
         };
 
@@ -168,15 +169,17 @@ var self = {
     var text = data['text'];
     var filename = data['filename'];
 
-    var dotIndex = filename.indexOf('.');
-
-    if (dotIndex !== -1) {
-      // Add a file extension
-      filename += '.text';
-    } else {
-      // Change the file extension
-      filename = filename.replace(/\.[^/.]+$/, ".text");
+    if (!text) {
+      context.failure('No text found in message');
+      return;
     }
+
+    if (!filename) {
+      context.failure('No filename found in message');
+      return;
+    }
+
+    filename = self._renameImageForSave(filename);
 
     var gcs = gcloud.storage();
     var bucket = config['result_bucket'];
@@ -188,8 +191,20 @@ var self = {
         context.failure(err);
         return;
       }
-      console.success('Text written to ' + file.name);
+      context.success('Text written to ' + file.name);
     });
+  },
+
+  // Appends a .txt suffix to the image name
+  _renameImageForSave: function(filename) {
+    var dotIndex = filename.indexOf('.');
+    var suffix = '.txt';
+    if (dotIndex !== -1) {
+      filename = filename.replace(/\.[^/.]+$/, suffix);
+    } else {
+      filename += suffix;
+    }
+    return filename;
   },
 
   // Gets or creates a pubsub topic
@@ -214,10 +229,11 @@ var self = {
   /** 
    * Gets the filename from a URL
    **/
-  _getFileName: function(val) {
+  _getFileName: function(val, defaultValue) {
     var url = require('url').parse(val);
     var paths = url.pathname.split('/');
-    return paths[paths.length - 1];
+    var result = paths[paths.length - 1];
+    return result || defaultValue;
   },
 
   /**

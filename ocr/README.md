@@ -19,15 +19,11 @@ This recipe shows you how to use the Cloud Vision API together with the Google T
 
 		node setup install ocr [PROJECT-ID]
 
-4. 	CWD
+4. 	Upload a sample image
 
-		cd ocr
+		gsutil cp ocr/sample_fr.png gs://[PROJECT-ID]-gcf-samples-ocr-in/ 
 
-5. 	Upload a sample image
-
-		gsutil cp sample_fr.png gs://[PROJECT-ID]-gcf-samples-ocr-in/ 
-
-6.	Pull the extracted text from the bucket and pipe to standard out
+5.	Pull the extracted text from the bucket and pipe to standard out
 
 		gsutil cat gs://[PROJECT-ID]-gcf-samples-ocr-out/sample_fr.txt
 

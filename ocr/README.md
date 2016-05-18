@@ -1,8 +1,8 @@
 # Google Cloud Functions Recipes
-## Cloud Pub/Sub
+## OCR with Cloud Vision API and Google Translate API
 
 ### Overview
-This recipe shows you how to publish messages to a Cloud Pub/Sub topic from a Cloud Function.  Where applicable:
+This recipe shows you how to use the Cloud Vision API together with the Google Translate API using Cloud Pub/Sub as a message bus.  Where applicable:
 
 **Replace [PROJECT-ID] with your Cloud Platform project ID**
 
@@ -13,40 +13,16 @@ This recipe shows you how to publish messages to a Cloud Pub/Sub topic from a Cl
 
 		cd ~/
 		git clone https://github.com/jasonpolites/gcf-recipes.git
-		cd gcf-recipes/pubsub
 		
-3.	Create a Cloud Pub/Sub topic (if you already have one you want to use, you can skip this step):
+3.	Run the setup for the ocr sample:
 
-		gcloud alpha pubsub topics create gcf-recipes-topic		
+		node setup install ocr [PROJECT-ID]
 
-4. 	Create a Cloud Storage Bucket to stage our deployment
+4. 	Upload a sample image
 
-		gsutil mb gs://[PROJECT-ID]-gcf-recipes-bucket
+		gsutil cp sample_fr.png gs://[PROJECT-ID]-gcf-samples-ocr-in/ 
 
-5.	Deploy the "publish" function with an HTTP trigger
-	
-		gcloud alpha functions deploy publish --bucket [PROJECT-ID]-gcf-recipes-bucket --trigger-http
-
-6. 	Deploy the "subscribe" function with the Pub/Sub topic as a trigger
-
-		gcloud alpha functions deploy subscribe --bucket [PROJECT-ID]-gcf-recipes-bucket --trigger-topic gcf-recipes-topic
-		
-7. 	Call the "publish" function
-
-		gcloud alpha functions call publish --data '{"topic": "gcf-recipes-topic", "message": "Hello World!"}' 
-		
-8.	Check the logs for the "subscribe" function
-
-		gcloud alpha functions get-logs subscribe
-		
-		
-	
-You should see something like this in your console
-```
-D      ... User function triggered, starting execution
-I      ... Hello World!
-D      ... Execution took 1 ms, user function completed successfully
-```
+5.	Open your Cloud Console and browse to the [PROJECT-ID]-gcf-samples-ocr-out bucket to get your extracted, translated text
 
 #### Running Tests
 This recipe comes with a suite of unit tests.  To run the tests locally, just use `npm test`

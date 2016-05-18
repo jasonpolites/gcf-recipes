@@ -24,9 +24,9 @@
     }]
   }, {
     "parallel": [{
-      "desc": "Deploy function gcf-ocr-gcs",
+      "desc": "Deploy function gcf-ocr-extract",
       "type": "console",
-      "cmd": "gcloud alpha functions deploy gcf-ocr-gcs --bucket {projectId}-gcf-samples --trigger-gs-uri {projectId}-gcf-samples-ocr-in --entry-point ocrGCS"
+      "cmd": "gcloud alpha functions deploy gcf-ocr-extract --bucket {projectId}-gcf-samples --trigger-gs-uri {projectId}-gcf-samples-ocr-in --entry-point ocrGCS"
     }, {
       "desc": "Deploy function gcf-ocr-save",
       "type": "console",

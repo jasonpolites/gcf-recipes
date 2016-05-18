@@ -73,7 +73,8 @@ var self = {
         return;
       }
 
-      logger.log('Extracted text from image');
+      logger.log('Extracted text from image (' + text.length +
+        ' chars)');
 
       // Check to see if we should translate this.
       var
@@ -126,6 +127,7 @@ var self = {
 
     if (!text) {
       context.failure('No text found in message');
+      logger.error(data);
       return;
     }
 
@@ -172,19 +174,23 @@ var self = {
 
     if (!text) {
       context.failure('No text found in message');
+      logger.error(data);
       return;
     }
 
     if (!filename) {
       context.failure('No filename found in message');
+      logger.error(data);
       return;
     }
 
     filename = self._renameImageForSave(filename);
 
+    var bucketName = config['result_bucket'];
     var gcs = gcloud.storage();
-    var bucket = config['result_bucket'];
-    var file = gcs.bucket(bucket).file(filename);
+    var file = gcs.bucket(bucketName).file(filename);
+
+    logger.log('Saving result to ' + filename + ' in bucket ' + bucketName);
 
     file.save(text, function(err) {
       if (err) {
@@ -246,11 +252,9 @@ var self = {
         callback(err);
         return;
       }
-      // Pub/Sub messages must be valid JSON objects.
+      // Pub/Sub messages must be valid JSON objects with a data property.
       topic.publish({
-        data: {
-          message: data,
-        },
+        data: data,
       }, callback);
     });
   }

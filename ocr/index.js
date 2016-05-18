@@ -92,11 +92,15 @@ var self = {
         });
 
         translate.detect(text, function(err, results) {
+
+          console.log('In detect with err ' + err);
+
           if (err) {
             callback(err);
             return;
           }
 
+          // Translate by default
           strTopicName = config['translate_topic'];
 
           // If English is in the list, don't bother translating
@@ -106,12 +110,11 @@ var self = {
               break;
             }
           }
+          self._publishResult(strTopicName, data, callback);
         });
       } else {
-        strTopicName = config['result_topic'];
+        self._publishResult(config['result_topic'], data, callback);
       }
-
-      self._publishResult(strTopicName, data, callback);
     });
   },
 

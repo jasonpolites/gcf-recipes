@@ -22,7 +22,9 @@ This recipe shows you how to use the Cloud Vision API together with the Google T
 
 		gsutil cp sample_fr.png gs://[PROJECT-ID]-gcf-samples-ocr-in/ 
 
-5.	Open your Cloud Console and browse to the [PROJECT-ID]-gcf-samples-ocr-out bucket to get your extracted, translated text
+5.	Pull the extracted text from the bucket and pipe to standard out
+
+		gsutil cat gs://[PROJECT-ID]-gcf-samples-ocr-out/sample_fr.txt
 
 #### Running Tests
 This recipe comes with a suite of unit tests.  To run the tests locally, just use `npm test`

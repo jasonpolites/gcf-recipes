@@ -774,9 +774,7 @@ describe('OCR Tests', function() {
         .callsArgWith(1, null, topic);
 
       topicMock.expects('publish').withArgs({
-        data: {
-          message: data
-        }
+        data: data
       }, callback);
 
       mut._publishResult(strTopicName, data, callback);

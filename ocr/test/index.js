@@ -249,7 +249,7 @@ describe('OCR Tests', function() {
       mutMock.expects('_publishResult').never();
 
       visionMock.expects('detectText').withArgs(image).callsArgWith(
-        1, null, text);
+        1, null, [text]);
 
       translateMock.expects('detect').withArgs(text).callsArgWith(
         1, err);
@@ -295,7 +295,7 @@ describe('OCR Tests', function() {
 
         visionMock.expects('detectText').withArgs(image)
           .callsArgWith(
-            1, null, text);
+            1, null, [text]);
 
         translateMock.expects('detect').never();
 
@@ -341,7 +341,7 @@ describe('OCR Tests', function() {
 
         visionMock.expects('detectText').withArgs(image)
           .callsArgWith(
-            1, null, text);
+            1, null, [text]);
 
         translateMock.expects('detect').withArgs(text).callsArgWith(
           1, null, results)
@@ -394,7 +394,7 @@ describe('OCR Tests', function() {
 
         visionMock.expects('detectText').withArgs(image)
           .callsArgWith(
-            1, null, text);
+            1, null, [text]);
 
         translateMock.expects('detect').withArgs(text).callsArgWith(
           1, null, results)
@@ -577,7 +577,14 @@ describe('OCR Tests', function() {
         var fileMock = sandbox.mock(file);
         var mutMock = sandbox.mock(mut);
 
-        fileMock.expects('save').once().withArgs(text).callsArg(1);
+        var options = {
+          metadata: {
+            contentType: 'text/plain',
+          }
+        }
+
+        fileMock.expects('save').once().withArgs(text, options).callsArg(
+          2);
         mutMock.expects('_renameImageForSave').once().withArgs(
           'foobar_filename.jpg').returns(textfile);
         contextMock.expects('success').once().withExactArgs(
@@ -608,8 +615,14 @@ describe('OCR Tests', function() {
 
       var fileMock = sandbox.mock(file);
       var mutMock = sandbox.mock(mut);
+      var options = {
+        metadata: {
+          contentType: 'text/plain',
+        }
+      }
 
-      fileMock.expects('save').once().withArgs(text).callsArgWith(1,
+      fileMock.expects('save').once().withArgs(text, options).callsArgWith(
+        2,
         err);
       mutMock.expects('_renameImageForSave').once().withArgs(
         'foobar_filename.jpg').returns(textfile);

@@ -73,6 +73,8 @@ var self = {
         return;
       }
 
+      text = text[0];
+
       logger.log('Extracted text from image (' + text.length +
         ' chars)');
 
@@ -189,10 +191,15 @@ var self = {
     var bucketName = config['result_bucket'];
     var gcs = gcloud.storage();
     var file = gcs.bucket(bucketName).file(filename);
+    var options = {
+      metadata: {
+        contentType: 'text/plain',
+      }
+    }
 
     logger.log('Saving result to ' + filename + ' in bucket ' + bucketName);
 
-    file.save(text, function(err) {
+    file.save(text, options, function(err) {
       if (err) {
         logger.error(err);
         context.failure(err);

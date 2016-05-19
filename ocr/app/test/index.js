@@ -1,6 +1,7 @@
 var chai = require('chai');
 var sinon = require('sinon');
 var proxyquire = require('proxyquire').noCallThru();
+require('sinon-as-promised');
 
 describe('OCR Tests', function() {
 
@@ -47,7 +48,7 @@ describe('OCR Tests', function() {
     result_bucket: 'foobar_result_bucket',
     translate_key: 'foobar_translate_key',
     translate: false,
-    to_lang: 'foobar_to_lang'
+    to_lang: ['foobar_to_lang0', 'foobar_to_lang1', 'foobar_to_lang2']
   };
 
   config = function() {
@@ -159,26 +160,6 @@ describe('OCR Tests', function() {
     });
   });
 
-  describe('Testing ocrHTTP', function() {
-    it('Calls _ocr with correct data arguments', function() {
-      var data = {
-        'filename': 'foobar_name',
-        'image': 'foobar_image'
-      };
-
-      var mutMock = sandbox.mock(mut);
-
-      mutMock.expects('_ocr').once().withArgs(data).callsArg(1);
-
-      contextMock.expects('done').once().withExactArgs(undefined);
-
-      mut.ocrHTTP(context, data);
-
-      contextMock.verify();
-      mutMock.verify();
-    });
-  });
-
   describe('Testing _ocr', function() {
 
     it('Call fails without an image', function() {
@@ -266,6 +247,10 @@ describe('OCR Tests', function() {
       'Calls the vision API and publishes results but does not call translate if config for translate is false',
       function() {
 
+        // Ensure config has translate set to false
+        configObj.translate = false;
+
+
         var
           image = 'foobar_image',
           text = 'foobar text',
@@ -291,7 +276,7 @@ describe('OCR Tests', function() {
 
         // Mock out the _publishResult method, we'll test that elsewhere
         mutMock.expects('_publishResult').withExactArgs(
-          'foobar_result_topic', expectedData, callback);
+          'foobar_result_topic', expectedData).resolves();
 
         visionMock.expects('detectText').withArgs(image)
           .callsArgWith(
@@ -308,7 +293,7 @@ describe('OCR Tests', function() {
 
     it(
       'Calls the vision API AND the translate API and publishes results to the translate topic for non English detection',
-      function() {
+      function(done) {
 
         // Ensure config has translate set to true
         configObj.translate = true;
@@ -318,48 +303,77 @@ describe('OCR Tests', function() {
           text = 'foobar text',
           filename = 'foobar_file',
           results = [{
-            language: 'es'
+            language: 'foobar_to_lang2'
           }]
 
         var data = {
           image: image
         };
 
-        var expectedData = {
+        var expectedData0 = {
           filename: filename,
-          text: text
+          text: text,
+          lang: 'foobar_to_lang0'
+        }
+
+        var expectedData1 = {
+          filename: filename,
+          text: text,
+          lang: 'foobar_to_lang1'
+        }
+
+        var expectedData2 = {
+          filename: filename,
+          text: text,
+          lang: 'foobar_to_lang2'
         }
 
         var mutMock = sandbox.mock(mut);
         var visionMock = sandbox.mock(vision);
         var translateMock = sandbox.mock(translate);
-        var callback = sinon.stub();
 
         // Mock out the _getFileName method, we'll test that elsewhere
-        mutMock.expects('_getFileName').withExactArgs(image)
+        mutMock.expects('_getFileName').once().withExactArgs(image)
           .returns(filename);
 
-        visionMock.expects('detectText').withArgs(image)
+        visionMock.expects('detectText').once().withArgs(image)
           .callsArgWith(
             1, null, [text]);
 
-        translateMock.expects('detect').withArgs(text).callsArgWith(
+        translateMock.expects('detect').once().withArgs(text).callsArgWith(
           1, null, results)
 
         // Mock out the _publishResult method, we'll test that elsewhere
-        mutMock.expects('_publishResult').withExactArgs(
-          'foobar_translate_topic', expectedData, callback);
+        // We expect it to be called twice, once for each language
+        mutMock.expects('_publishResult').once().withExactArgs(
+          'foobar_translate_topic', expectedData0).resolves();
 
-        mut._ocr(data, callback);
+        mutMock.expects('_publishResult').once().withExactArgs(
+          'foobar_translate_topic', expectedData1).resolves();
 
-        translateMock.verify();
-        visionMock.verify();
-        mutMock.verify();
+        // And once for the language that matches, but not to the translate topic
+        mutMock.expects('_publishResult').once().withExactArgs(
+          'foobar_result_topic', expectedData2).resolves();
+
+        mut._ocr(data, function(err) {
+          if (err) {
+            done(err);
+            return;
+          }
+          try {
+            translateMock.verify();
+            visionMock.verify();
+            mutMock.verify();
+            done();
+          } catch (e) {
+            done(e);
+          }
+        });
       });
 
     it(
-      'Calls the vision API AND the translate API and publishes results to the result topic for English detection',
-      function() {
+      'Calls back with error when at least one of the publish promises fails',
+      function(done) {
 
         // Ensure config has translate set to true
         configObj.translate = true;
@@ -369,45 +383,71 @@ describe('OCR Tests', function() {
           text = 'foobar text',
           filename = 'foobar_file',
           results = [{
-            language: 'es'
-          }, {
-            language: 'en'
+            language: 'foobar_to_lang2'
           }]
 
         var data = {
           image: image
         };
 
-        var expectedData = {
+        var expectedData0 = {
           filename: filename,
-          text: text
+          text: text,
+          lang: 'foobar_to_lang0'
+        }
+
+        var expectedData1 = {
+          filename: filename,
+          text: text,
+          lang: 'foobar_to_lang1'
+        }
+
+        var expectedData2 = {
+          filename: filename,
+          text: text,
+          lang: 'foobar_to_lang2'
         }
 
         var mutMock = sandbox.mock(mut);
         var visionMock = sandbox.mock(vision);
         var translateMock = sandbox.mock(translate);
-        var callback = sinon.stub();
+
+        var err = 'foobar_error';
 
         // Mock out the _getFileName method, we'll test that elsewhere
-        mutMock.expects('_getFileName').withExactArgs(image)
+        mutMock.expects('_getFileName').once().withExactArgs(image)
           .returns(filename);
 
-        visionMock.expects('detectText').withArgs(image)
+        visionMock.expects('detectText').once().withArgs(image)
           .callsArgWith(
             1, null, [text]);
 
-        translateMock.expects('detect').withArgs(text).callsArgWith(
+        translateMock.expects('detect').once().withArgs(text).callsArgWith(
           1, null, results)
 
         // Mock out the _publishResult method, we'll test that elsewhere
-        mutMock.expects('_publishResult').withExactArgs(
-          'foobar_result_topic', expectedData, callback);
+        // We expect it to be called twice, once for each language
+        mutMock.expects('_publishResult').once().withExactArgs(
+          'foobar_translate_topic', expectedData0).resolves();
 
-        mut._ocr(data, callback);
+        mutMock.expects('_publishResult').once().withExactArgs(
+          'foobar_translate_topic', expectedData1).rejects(err);
 
-        translateMock.verify();
-        visionMock.verify();
-        mutMock.verify();
+        // And once for the language that matches, but not to the translate topic
+        mutMock.expects('_publishResult').once().withExactArgs(
+          'foobar_result_topic', expectedData2).resolves();
+
+        mut._ocr(data, function(val) {
+          try {
+            chai.expect(val.message).to.equal(err);
+            translateMock.verify();
+            visionMock.verify();
+            mutMock.verify();
+            done();
+          } catch (e) {
+            done(e);
+          }
+        });
       });
   });
 
@@ -444,38 +484,65 @@ describe('OCR Tests', function() {
       translateMock.verify();
     });
 
+    it('Call fails without lang', function() {
+
+      contextMock.expects('failure').once().withExactArgs(
+        'No lang found in message');
+
+      // Ensure the function returns
+      var translateMock = sandbox.mock(translate);
+      translateMock.expects('translate').never();
+
+      mut.translate(context, {
+        text: 'foobar',
+        filename: 'foobar_file'
+      });
+
+      contextMock.verify();
+      translateMock.verify();
+    });
+
     it(
       'Calls translate with correct arguments and publishes result to correct topic',
-      function() {
+      function(done) {
 
         var
           text = 'foobar_text',
           filename = 'foobar_filename',
+          lang = 'foobar_lang',
           translation = 'foobar_translation',
           data = {
             text: text,
-            filename: filename
+            filename: filename,
+            lang: lang
           },
           expectedData = {
             text: translation,
-            filename: filename
+            filename: filename,
+            lang: lang
           }
 
         var translateMock = sandbox.mock(translate);
         var mutMock = sandbox.mock(mut);
 
         translateMock.expects('translate').once().withArgs(text,
-          'foobar_to_lang').callsArgWith(2, null, translation);
-        mutMock.expects('_publishResult').once().withArgs(
-          'foobar_result_topic', expectedData).callsArg(2);
-        contextMock.expects('success').once().withExactArgs(
-          'Text translated');
+          'foobar_lang').callsArgWith(2, null, translation);
 
-        mut.translate(context, data);
+        mutMock.expects('_publishResult').once().withExactArgs(
+          'foobar_result_topic', expectedData).resolves();
 
-        contextMock.verify();
-        translateMock.verify();
-        mutMock.verify();
+        mut.translate({
+          'success': function(val) {
+            try {
+              chai.expect(val).to.equal('Text translated');
+              translateMock.verify();
+              mutMock.verify();
+              done();
+            } catch (e) {
+              done(e);
+            }
+          }
+        }, data);
       });
 
     it('Reports error on context when translate fails', function() {
@@ -483,17 +550,19 @@ describe('OCR Tests', function() {
       var
         text = 'foobar_text',
         filename = 'foobar_filename',
+        lang = 'foobar_lang',
         err = 'foobar_error',
         data = {
           text: text,
-          filename: filename
+          filename: filename,
+          lang: lang
         };
 
       var translateMock = sandbox.mock(translate);
       var mutMock = sandbox.mock(mut);
 
       translateMock.expects('translate').once().withArgs(text,
-        'foobar_to_lang').callsArgWith(2, err);
+        'foobar_lang').callsArgWith(2, err);
       mutMock.expects('_publishResult').never();
       contextMock.expects('failure').once().withExactArgs(err);
 
@@ -504,34 +573,53 @@ describe('OCR Tests', function() {
       mutMock.verify();
     });
 
-    it('Reports error on context when _publishResult fails', function() {
+    it('Reports error on context when _publishResult fails', function(
+      done) {
 
       var
         text = 'foobar_text',
         filename = 'foobar_filename',
         translation = 'foobar_translation',
+        lang = 'foobar_lang',
         err = 'foobar_error',
         data = {
           text: text,
-          filename: filename
+          filename: filename,
+          lang: lang
         },
         expectedData = {
           text: translation,
-          filename: filename
+          filename: filename,
+          lang: lang
         }
 
       var translateMock = sandbox.mock(translate);
       var mutMock = sandbox.mock(mut);
 
       translateMock.expects('translate').once().withArgs(text,
-        'foobar_to_lang').callsArgWith(2, null, translation);
-      mutMock.expects('_publishResult').once().withArgs(
-        'foobar_result_topic', expectedData).callsArgWith(2, err);
-      contextMock.expects('failure').once().withExactArgs(err);
+        'foobar_lang').callsArgWith(2, null, translation);
 
-      mut.translate(context, data);
+      mutMock.expects('_publishResult').once().withExactArgs(
+        'foobar_result_topic', expectedData).rejects(err);
 
-      contextMock.verify();
+      var promisedContext = {
+        'failure': function(val) {
+          try {
+            chai.expect(val).to.equal(err);
+            translateMock.verify();
+            mutMock.verify();
+            done();
+          } catch (e) {
+            done(e);
+          }
+        },
+        'success': function(val) {
+          done('Unexpected call to success');
+        }
+      }
+
+      mut.translate(promisedContext, data);
+
       translateMock.verify();
       mutMock.verify();
     });
@@ -577,14 +665,7 @@ describe('OCR Tests', function() {
         var fileMock = sandbox.mock(file);
         var mutMock = sandbox.mock(mut);
 
-        var options = {
-          metadata: {
-            contentType: 'text/plain',
-          }
-        }
-
-        fileMock.expects('save').once().withArgs(text, options).callsArg(
-          2);
+        fileMock.expects('save').once().withArgs(text).callsArg(1);
         mutMock.expects('_renameImageForSave').once().withArgs(
           'foobar_filename.jpg').returns(textfile);
         contextMock.expects('success').once().withExactArgs(
@@ -615,14 +696,9 @@ describe('OCR Tests', function() {
 
       var fileMock = sandbox.mock(file);
       var mutMock = sandbox.mock(mut);
-      var options = {
-        metadata: {
-          contentType: 'text/plain',
-        }
-      }
 
-      fileMock.expects('save').once().withArgs(text, options).callsArgWith(
-        2,
+      fileMock.expects('save').once().withArgs(text).callsArgWith(
+        1,
         err);
       mutMock.expects('_renameImageForSave').once().withArgs(
         'foobar_filename.jpg').returns(textfile);
@@ -644,13 +720,14 @@ describe('OCR Tests', function() {
   describe('Testing _renameImageForSave', function() {
     it('Renames files correctly', function() {
       var expectations = [
-        ['foo0', 'foo0.txt'],
-        ['foo1.bar', 'foo1.txt'],
-        ['foo2.bar.jpg', 'foo2.bar.txt'],
-        ['foo3.txt', 'foo3.txt']
+        ['foo0', 'foo0_to_bar.txt'],
+        ['foo1.bar', 'foo1_to_bar.txt'],
+        ['foo2.bar.jpg', 'foo2.bar_to_bar.txt'],
+        ['foo3.txt', 'foo3_to_bar.txt']
       ];
       for (var i = 0; i < expectations.length; ++i) {
-        chai.expect(mut._renameImageForSave(expectations[i][0])).to
+        chai.expect(mut._renameImageForSave(expectations[i][0],
+            'bar')).to
           .equal(expectations[i][1]);
       }
     });
@@ -772,13 +849,12 @@ describe('OCR Tests', function() {
   });
 
   describe('Testing _publishResult', function() {
-    it('Calls publish with correct data on success', function() {
+    it('Calls publish with correct data on success', function(done) {
       var
         strTopicName = 'foobar_topic',
         data = {
           foo: 'bar'
-        },
-        callback = sandbox.stub();
+        };
 
       var mutMock = sandbox.mock(mut);
       var topicMock = sandbox.mock(topic);
@@ -788,14 +864,17 @@ describe('OCR Tests', function() {
 
       topicMock.expects('publish').withArgs({
         data: data
-      }, callback);
+      }).callsArg(1);
 
-      mut._publishResult(strTopicName, data, callback);
-
-      sinon.assert.notCalled(callback);
-
-      mutMock.verify();
-      topicMock.verify();
+      mut._publishResult(strTopicName, data).then(function() {
+        try {
+          mutMock.verify();
+          topicMock.verify();
+          done();
+        } catch (e) {
+          done(e);
+        }
+      });
     });
 
     it('Calls back with error on topic creation failure', function() {
@@ -815,12 +894,47 @@ describe('OCR Tests', function() {
 
       topicMock.expects('publish').never();
 
-      mut._publishResult(strTopicName, data, callback);
-
-      sinon.assert.calledWith(callback, err);
-
-      mutMock.verify();
-      topicMock.verify()
+      mut._publishResult(strTopicName, data).catch(function(val) {
+        try {
+          chai.expect(val).to.equal(err);
+          mutMock.verify();
+          topicMock.verify();
+          done();
+        } catch (e) {
+          done(e);
+        }
+      });
     });
+
+    it('Calls back with error on publish failure', function(done) {
+      var
+        strTopicName = 'foobar_topic',
+        data = {
+          foo: 'bar'
+        },
+        err = 'foobar_error';
+
+      var mutMock = sandbox.mock(mut);
+      var topicMock = sandbox.mock(topic);
+
+      mutMock.expects('_getOrCreateTopic').withArgs(strTopicName)
+        .callsArgWith(1, null, topic);
+
+      topicMock.expects('publish').withArgs({
+        data: data
+      }).callsArgWith(1, err);
+
+      mut._publishResult(strTopicName, data).catch(function(val) {
+        try {
+          chai.expect(val).to.equal(err);
+          mutMock.verify();
+          topicMock.verify();
+          done();
+        } catch (e) {
+          done(e);
+        }
+      });
+    });
+
   });
 });

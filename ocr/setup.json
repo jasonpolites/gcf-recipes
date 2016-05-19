@@ -3,11 +3,11 @@
     "serial": [{
       "desc": "Remove local node_modules",
       "type": "console",
-      "cmd": "rm -rf node_modules"
+      "cmd": "rm -rf app/node_modules"
     }, {
       "desc": "Remove local coverage",
       "type": "console",
-      "cmd": "rm -rf coverage"
+      "cmd": "rm -rf app/coverage"
     }],
     "parallel": [{
       "desc": "Create staging bucket",
@@ -26,15 +26,15 @@
     "parallel": [{
       "desc": "Deploy function gcf-ocr-extract",
       "type": "console",
-      "cmd": "gcloud alpha functions deploy gcf-ocr-extract --bucket {projectId}-gcf-samples --trigger-gs-uri {projectId}-gcf-samples-ocr-in --entry-point ocrGCS"
+      "cmd": "gcloud alpha functions deploy gcf-ocr-extract --bucket {projectId}-gcf-samples --trigger-gs-uri {projectId}-gcf-samples-ocr-in --source app --entry-point ocrGCS"
     }, {
       "desc": "Deploy function gcf-ocr-save",
       "type": "console",
-      "cmd": "gcloud alpha functions deploy gcf-ocr-save --bucket {projectId}-gcf-samples --trigger-topic gcf-ocr-result --entry-point saveToGCS"
+      "cmd": "gcloud alpha functions deploy gcf-ocr-save --bucket {projectId}-gcf-samples --trigger-topic gcf-ocr-result --source app --entry-point saveToGCS"
     }, {
       "desc": "Deploy function gcf-ocr-translate",
       "type": "console",
-      "cmd": "gcloud alpha functions deploy gcf-ocr-translate --bucket {projectId}-gcf-samples --trigger-topic gcf-ocr-translate --entry-point translate"
+      "cmd": "gcloud alpha functions deploy gcf-ocr-translate --bucket {projectId}-gcf-samples --trigger-topic gcf-ocr-translate --source app --entry-point translate"
     }]
   }]
 }

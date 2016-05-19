@@ -4,7 +4,7 @@
   "description": "Google Cloud Functions Recipes - Simple Map Reduce",
   "main": "index.js",
   "scripts": {
-    "test": "NODE_ENV=test istanbul cover -x logger.js _mocha test/ --recursive",
+    "test": "NODE_ENV=test istanbul cover -x logger.js _mocha test/ --recursive"
   },
   "keywords": [
     "cloud",

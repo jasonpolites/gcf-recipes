@@ -24,7 +24,7 @@ This recipe shows you how to use the Cloud Vision API together with the Google T
 
 4. 	Upload a sample image
 
-		gsutil cp ocr/sample_fr.png gs://[PROJECT-ID]-gcf-samples-ocr-in/ 
+		gsutil cp ocr/samples/sample_fr.png gs://[PROJECT-ID]-gcf-samples-ocr-in/ 
 
 5.	Pull the extracted text from the bucket and pipe to standard out
 

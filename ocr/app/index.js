@@ -35,14 +35,6 @@ var self = {
     });
   },
 
-  // OCR Function to be bound to an HTTP trigger
-  ocrHTTP: function(context, data) {
-    // Expect a URL in the data argument
-    self._ocr(data, function(err) {
-      context.done(err);
-    });
-  },
-
   /**
    * Detects the text in an image using the Google Vision API
    */
@@ -78,14 +70,9 @@ var self = {
       logger.log('Extracted text from image (' + text.length +
         ' chars)');
 
-      // Check to see if we should translate this.
       var
         translate = config['translate'],
-        strTopicName,
-        data = {
-          'text': text,
-          'filename': filename
-        };
+        strTopicName;
 
       if (translate === true) {
 
@@ -94,6 +81,7 @@ var self = {
           key: config['translate_key']
         });
 
+        // Detect the language to avoid unnecessary translations
         translate.detect(text, function(err, results) {
 
           if (err) {
@@ -101,20 +89,47 @@ var self = {
             return;
           }
 
-          // Translate by default
-          strTopicName = config['translate_topic'];
-
-          // If English is in the list, don't bother translating
+          // Build a simple array that we can index
+          var matched = [];
           for (var i = 0; i < results.length; ++i) {
-            if (results[i].language === 'en') {
-              strTopicName = config['result_topic'];
-              break;
-            }
+            matched.push(results[i].language);
           }
-          self._publishResult(strTopicName, data, callback);
+
+          // Submit a message to the bus for each language we're going to translate to
+          var langs = config['to_lang'];
+
+          // Create an array of Promises so we can easily synchronize callbacks
+          var promises = [];
+
+          for (var i = 0; i < langs.length; ++i) {
+            var lang = langs[i];
+            if (matched.indexOf(lang) >= 0) {
+              // No need to translate
+              strTopicName = config['result_topic'];
+            } else {
+              strTopicName = config['translate_topic'];
+            }
+
+            promises.push(self._publishResult(strTopicName, {
+              'text': text,
+              'filename': filename,
+              'lang': lang
+            }));
+          }
+
+          Promise.all(promises).then(
+            function(result) {
+              callback();
+            },
+            function(err) {
+              callback(err);
+            });
         });
       } else {
-        self._publishResult(config['result_topic'], data, callback);
+        self._publishResult(config['result_topic'], {
+          'text': text,
+          'filename': filename
+        }).then(callback).catch(callback);
       }
     });
   },
@@ -126,6 +141,7 @@ var self = {
 
     var text = data['text'];
     var filename = data['filename'];
+    var lang = data['lang'];
 
     if (!text) {
       context.failure('No text found in message');
@@ -138,11 +154,18 @@ var self = {
       return;
     }
 
+    if (!lang) {
+      context.failure('No lang found in message');
+      return;
+    }
+
     var translate = gcloud.translate({
       key: config['translate_key']
     });
 
-    translate.translate(text, config['to_lang'], function(err, translation) {
+    logger.log('Translating text into ' + lang);
+
+    translate.translate(text, lang, function(err, translation) {
       if (err) {
         logger.error(err);
         context.failure(err);
@@ -153,16 +176,15 @@ var self = {
         strTopicName = config['result_topic'],
         data = {
           'text': translation,
-          'filename': filename
+          'filename': filename,
+          'lang': lang
         };
 
-      self._publishResult(strTopicName, data, function(err) {
-        if (err) {
-          logger.error(err);
-          context.failure(err);
-          return;
-        }
+      self._publishResult(strTopicName, data).then(function(err) {
         context.success('Text translated');
+      }).catch(function(err) {
+        logger.error(err);
+        context.failure(err.message);
       });
     });
   },
@@ -173,6 +195,9 @@ var self = {
   saveToGCS: function(context, data) {
     var text = data['text'];
     var filename = data['filename'];
+    var lang = data['lang'] || 'unknown';
+
+    logger.log('Received request to save file ' + filename);
 
     if (!text) {
       context.failure('No text found in message');
@@ -186,20 +211,15 @@ var self = {
       return;
     }
 
-    filename = self._renameImageForSave(filename);
+    filename = self._renameImageForSave(filename, lang);
 
     var bucketName = config['result_bucket'];
     var gcs = gcloud.storage();
     var file = gcs.bucket(bucketName).file(filename);
-    var options = {
-      metadata: {
-        contentType: 'text/plain',
-      }
-    }
 
     logger.log('Saving result to ' + filename + ' in bucket ' + bucketName);
 
-    file.save(text, options, function(err) {
+    file.save(text, function(err) {
       if (err) {
         logger.error(err);
         context.failure(err);
@@ -210,9 +230,9 @@ var self = {
   },
 
   // Appends a .txt suffix to the image name
-  _renameImageForSave: function(filename) {
+  _renameImageForSave: function(filename, lang) {
     var dotIndex = filename.indexOf('.');
-    var suffix = '.txt';
+    var suffix = '_to_' + lang + '.txt';
     if (dotIndex !== -1) {
       filename = filename.replace(/\.[^/.]+$/, suffix);
     } else {
@@ -251,18 +271,26 @@ var self = {
   },
 
   /**
-   * Publishes the result to the given pubsub topic
+   * Publishes the result to the given pubsub topic and returns a Promise
    */
-  _publishResult: function(strTopicName, data, callback) {
-    self._getOrCreateTopic(strTopicName, function(err, topic) {
-      if (err) {
-        callback(err);
-        return;
-      }
-      // Pub/Sub messages must be valid JSON objects with a data property.
-      topic.publish({
-        data: data,
-      }, callback);
+  _publishResult: function(strTopicName, data) {
+    return new Promise(function(resolve, reject) {
+      self._getOrCreateTopic(strTopicName, function(err, topic) {
+        if (err) {
+          reject(err);
+          return;
+        }
+        // Pub/Sub messages must be valid JSON objects with a data property.
+        topic.publish({
+          data: data,
+        }, function(err) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      });
     });
   }
 };

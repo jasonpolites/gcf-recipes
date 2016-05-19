@@ -4,9 +4,8 @@
   "description": "Google Cloud Functions Recipes - OCR with Cloud Vision & Translate",
   "main": "index.js",
   "scripts": {
-    "preversion": "npm test",
-    "unit": "NODE_ENV=test istanbul cover -x logger.js _mocha test/ --recursive",
-    "test": "npm run unit"
+    "pretest": "npm install",
+    "test": "NODE_ENV=test istanbul cover -x logger.js _mocha test/ --recursive"
   },
   "keywords": [
     "cloud",
@@ -26,6 +25,7 @@
     "istanbul": "^0.4.3",
     "mocha": "^2.4.5",
     "proxyquire": "^1.7.7",
-    "sinon": "^1.17.3"
+    "sinon": "^1.17.3",
+    "sinon-as-promised": "^4.0.0"
   }
 }

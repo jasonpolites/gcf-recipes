@@ -16,9 +16,11 @@ This recipe shows you how to use the Cloud Vision API together with the Google T
 		cd gcf-recipes
 		
 3.	Run the setup for the ocr sample:
-
-    npm install
-		node setup install ocr [PROJECT-ID]
+	
+	```
+	npm install
+	node setup install ocr [PROJECT-ID]
+	```
 
 4. 	Upload a sample image
 

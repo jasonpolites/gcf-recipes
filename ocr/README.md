@@ -9,6 +9,10 @@ This recipe shows you how to use the Cloud Vision API together with the Google T
 ### Cooking the Recipe
 1.	Follow the [Cloud Functions quickstart guide](https://cloud.google.com/functions/quickstart) to setup Cloud Functions for your project
 
+2. 	Enable the [Vision API](https://console.cloud.google.com/flows/enableapi?apiid=vision.googleapis.com) and the [Translate API](https://console.cloud.google.com/flows/enableapi?apiid=translate)
+
+3.	[Create a Google Translate API Key](https://cloud.google.com/translate/v2/translating-text-with-rest#auth) and replace the value in [config.js](app/config.js)
+
 2.	Clone this repository
 
 		cd ~/

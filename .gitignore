@@ -2,5 +2,5 @@
 node_modules/
 coverage/
 npm_debug.log
-local_deploy.txt
+local.txt
 keyfile.json

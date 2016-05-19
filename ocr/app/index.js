@@ -1,7 +1,7 @@
 var gcloud = require('gcloud')({
   // We're using the API from the same project as the Cloud Function.
-  projectId: process.env.GCP_PROJECT,
-  keyFilename: __dirname + '/keyfile.json'
+  projectId: process.env.GCP_PROJECT
+    // keyFilename: __dirname + '/keyfile.json'
 });
 
 // Use our logging utilty just as a convenience to skip 

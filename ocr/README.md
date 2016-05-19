@@ -28,11 +28,11 @@ This recipe shows you how to use the Cloud Vision API together with the Google T
 
 4. 	Upload a sample image
 
-		gsutil cp ocr/samples/sample_fr.png gs://[PROJECT-ID]-gcf-samples-ocr-in/ 
+		gsutil cp ocr/samples/sample_ch.png gs://[PROJECT-ID]-gcf-samples-ocr-in/ 
 
 5.	Pull the extracted text from the bucket and pipe to standard out
 
-		gsutil cat gs://[PROJECT-ID]-gcf-samples-ocr-out/sample_fr.txt
+		gsutil cat gs://[PROJECT-ID]-gcf-samples-ocr-out/sample_ch_to_en.txt
 
 #### Running Tests
 This recipe comes with a suite of unit tests.  To run the tests locally, just use `npm test`

@@ -4,9 +4,7 @@
   "description": "Google Cloud Functions Recipes - Cloud Pub/Sub",
   "main": "index.js",
   "scripts": {
-    "preversion": "npm test",
-    "unit": "NODE_ENV=test istanbul cover -x logger.js _mocha test/ --recursive",
-    "test": "npm run unit"
+    "test": "NODE_ENV=test istanbul cover -x logger.js _mocha test/ --recursive",
   },
   "keywords": [
     "cloud",

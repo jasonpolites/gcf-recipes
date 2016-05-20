@@ -3,7 +3,7 @@ var command = LOCAL_COMMAND =
 var TRAVIS_COMMAND = LOCAL_COMMAND +
   " && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js";
 
-if (process.env.TRAVIS === true) {
+if (process.env.TRAVIS === true || process.env.TRAVIS === 'true') {
   command = TRAVIS_COMMAND;
 }
 

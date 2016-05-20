@@ -6,6 +6,18 @@ This recipe shows you how to use the Cloud Vision API together with the Google T
 
 **Replace [PROJECT-ID] with your Cloud Platform project ID**
 
+### What's going on here?
+
+![OCR](images/readme.png "OCR")
+
+1.  Image is uploaded to Cloud Storage with text in any language (text in the image itself)
+2.	Cloud Function is triggered, uses the Vision API to extract the text, and the Translate API to detect the language
+3.	For all languages we're translating into (except the language of the text), publish a message to ther *translate* topic
+4.	For the language that matches the language of the text, bypass translation and publish to the *save* topic
+5. 	Cloud Function is triggered and uses the Translate API to translate the message into various languages, then publishes each translation to the *save* topic
+6. 	Cloud Function is triggered and saves text to Cloud Storage
+7. 	Translated text from the original source image is downloaded
+
 ### Cooking the Recipe
 1.	Follow the [Cloud Functions quickstart guide](https://cloud.google.com/functions/quickstart) to setup Cloud Functions for your project
 

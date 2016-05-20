@@ -1,9 +1,18 @@
+/**
+ * Pre-test script.
+ * Runs before npm test to make sure all modules in subdirectories have 
+ * npm install run on them first.  This ensures there are no dependency 
+ * issues when running tests from root.
+ */
+
 var fs = require('fs');
 var path = require('path');
 var cp = require('child_process');
 
 var dir = path.resolve(__dirname, '.');
 
+// Recursively runs npm install on all folders and subfolders
+// the contain a package.json
 var npmInstall = function(dir) {
 	fs.readdirSync(dir).filter(function(file) {
 		return fs.statSync(path.join(dir, file)).isDirectory();
@@ -23,4 +32,5 @@ var npmInstall = function(dir) {
 	});
 };
 
+// main
 npmInstall(dir);

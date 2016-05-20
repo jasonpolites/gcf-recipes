@@ -10,7 +10,7 @@ module.exports = function(projectId) {
         translate_topic: 'gcf-ocr-translate',
 
         // The name of the gcs bucket to which we will write results
-        result_bucket: 'gcf-tests-gcf-samples-ocr-out',
+        result_bucket: projectId + '-gcf-samples-ocr-out',
 
         // API Key for Google Translate
         translate_key: '<API_KEY>',

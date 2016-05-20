@@ -22,7 +22,7 @@ This recipe shows you how to use the Cloud Vision API together with the Google T
 
 5.	Create a file called `translate_apikey.json` and copy the Translate API Key into this file **as a String**
 
-		echo "\"<YOUR API KEY>\"" > ocr/app/translate_apikey.json
+		echo "\"[YOUR API KEY]\"" > ocr/app/translate_apikey.json
 
 4.	Run the setup for the ocr sample:
 	

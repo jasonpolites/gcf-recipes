@@ -1,6 +1,10 @@
 /******************************************************************************
  * OCR Recipe Configuration Module
  *****************************************************************************/
+
+// Set your Google translate API key
+var translateApiKey = require('./translate_apikey.json')
+
 module.exports = function(projectId) {
     return {
         // The topic that will receive final text results
@@ -13,7 +17,8 @@ module.exports = function(projectId) {
         result_bucket: projectId + '-gcf-samples-ocr-out',
 
         // API Key for Google Translate
-        translate_key: '<API_KEY>',
+        // SET THIS IN translate_apikey.json!
+        translate_key: translateApiKey,
 
         // True if we should translated extracted text
         translate: true,

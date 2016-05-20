@@ -9,28 +9,37 @@ This recipe shows you how to use the Cloud Vision API together with the Google T
 ### Cooking the Recipe
 1.	Follow the [Cloud Functions quickstart guide](https://cloud.google.com/functions/quickstart) to setup Cloud Functions for your project
 
-2. 	Enable the [Vision API](https://console.cloud.google.com/flows/enableapi?apiid=vision.googleapis.com) and the [Translate API](https://console.cloud.google.com/flows/enableapi?apiid=translate)
+2. 	Enable the [Vision API](https://console.cloud.google.com/flows/enableapi?apiid=vision.googleapis.com&redirect=https://github.com/jasonpolites/gcf-recipes/tree/master/ocr) and the [Translate API](https://console.cloud.google.com/flows/enableapi?apiid=translate&redirect=https://github.com/jasonpolites/gcf-recipes/tree/master/ocr)
 
-3.	[Create a Google Translate API Key](https://cloud.google.com/translate/v2/translating-text-with-rest#auth) and replace the value in [config.js](app/config.js)
-
-2.	Clone this repository
+3.	Clone this repository
 
 		cd ~/
 		git clone https://github.com/jasonpolites/gcf-recipes.git
 		cd gcf-recipes
 		
-3.	Run the setup for the ocr sample:
+
+4.	[Create a Google Translate API Key](https://cloud.google.com/translate/v2/translating-text-with-rest#auth)
+
+5.	Create a file called `translate_apikey.json` and copy the Translate API Key into this file **as a String**
+
+		echo "\"<YOUR API KEY>\"" > ocr/app/translate_apikey.json
+
+4.	Run the setup for the ocr sample:
 	
 	```
 	npm install
 	node setup install ocr [PROJECT-ID]
 	```
 
-4. 	Upload a sample image
+5. 	Upload a sample image
 
 		gsutil cp ocr/samples/sample_ch.jpg gs://[PROJECT-ID]-gcf-samples-ocr-in/ 
 
-5.	Pull the extracted text from the bucket and pipe to standard out
+6.	Watch the logs to make sure the executions have completed
+
+		gcloud alpha functions get-logs --limit 100
+
+6.	Pull the extracted text from the bucket and pipe to standard out
 
 		gsutil cat gs://[PROJECT-ID]-gcf-samples-ocr-out/sample_ch_to_en.txt
 

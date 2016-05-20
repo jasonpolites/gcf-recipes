@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "pretest": "npm install",
-    "test": "NODE_ENV=test istanbul cover -x logger.js _mocha test/ --recursive"
+    "test": "NODE_ENV=test istanbul cover -x logger.js _mocha test/"
   },
   "keywords": [
     "cloud",

@@ -935,6 +935,12 @@ describe('OCR Tests', function() {
         }
       });
     });
-
+    describe('Testing config', function() {
+      it('Bucket name for results uses project id', function() {
+        var config = require('../config.js')('foobar');
+        chai.expect(config['result_bucket']).to.equal(
+          'foobar-gcf-samples-ocr-out');
+      });
+    });
   });
 });

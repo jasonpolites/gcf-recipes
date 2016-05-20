@@ -5,7 +5,7 @@
   "scripts": {
     "pretest": "node pretest.js",
     "preinstall": "node preinstall.js",
-    "test": "NODE_ENV=test mocha --recursive **/test/** **/app/test"
+    "test": "node runtests.js"
   },
   "keywords": [
     "cloud",
@@ -16,6 +16,8 @@
   "author": "Jason Polites",
   "license": "ISC",
   "devDependencies": {
+    "coveralls": "^2.11.9",
+    "istanbul": "^0.4.3",
     "mocha": "^2.4.5"
   }
 }

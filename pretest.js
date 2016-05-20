@@ -14,21 +14,25 @@ var dir = path.resolve(__dirname, '.');
 // Recursively runs npm install on all folders and subfolders
 // the contain a package.json
 var npmInstall = function(dir) {
+	runNpmInstall(dir)
 	fs.readdirSync(dir).filter(function(file) {
 		return fs.statSync(path.join(dir, file)).isDirectory();
 	}).forEach(function(mod) {
 		if (mod !== 'node_modules' && mod !== 'coverage' && mod !== '.git') {
 			var modPath = path.join(dir, mod);
 			if (fs.existsSync(path.join(modPath, 'package.json'))) {
-				cp.spawn('npm', ['i'], {
-					env: process.env,
-					cwd: modPath,
-					stdio: 'inherit'
-				});
+				// recurse
+				npmInstall(modPath);
 			}
-			// recurse
-			npmInstall(modPath);
 		}
+	});
+};
+
+var runNpmInstall = function(modPath) {
+	cp.spawn('npm', ['i'], {
+		env: process.env,
+		cwd: modPath,
+		stdio: 'inherit'
 	});
 };
 

@@ -1,0 +1,32 @@
+{
+  "steps": [{
+    "serial": [{
+      "desc": "Remove local node_modules",
+      "type": "console",
+      "cmd": "rm -rf app/node_modules"
+    }, {
+      "desc": "Remove local coverage",
+      "type": "console",
+      "cmd": "rm -rf app/coverage"
+    }],
+    "parallel": [{
+      "desc": "Create staging bucket",
+      "type": "macro",
+      "cmd": "MB {projectId}-gcf-samples"
+    }, {
+      "desc": "Create in bucket",
+      "type": "macro",
+      "cmd": "MB {projectId}-gcf-samples-bq-in"
+    }, {
+      "desc": "Create out bucket",
+      "type": "macro",
+      "cmd": "MB {projectId}-gcf-samples-bq-processed"
+    }]
+  }, {
+    "parallel": [{
+      "desc": "Deploy function gcf-bq-onFileArrived",
+      "type": "console",
+      "cmd": "gcloud alpha functions deploy gcf-bq-onFileArrived --bucket {projectId}-gcf-samples --trigger-gs-uri {projectId}-gcf-samples-bq-in --source app --entry-point onFileArrived"
+    }]
+  }]
+}

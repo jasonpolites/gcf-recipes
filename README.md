@@ -1,5 +1,5 @@
 [![](https://travis-ci.org/jasonpolites/gcf-recipes.svg?branch=master)](https://travis-ci.org/jasonpolites/gcf-recipes)
-
+[![Coverage Status](https://coveralls.io/repos/github/jasonpolites/gcf-recipes/badge.svg?branch=master)](https://coveralls.io/github/jasonpolites/gcf-recipes?branch=master)
 # Google Cloud Functions Recipes (Unofficial)
 
  - Publishing messages to [Google Cloud Pub/Sub](/pubsub)

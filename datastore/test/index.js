@@ -4,26 +4,57 @@ var proxyquire = require('proxyquire').noCallThru();
 
 describe('Datastore Tests', function() {
 
-  var mut = require('../index.js');
+  var
+    sandbox,
+    mut,
+    context,
+    contextMock,
+    mutMock,
+    gcloud,
+    gcloudObj,
+    datastore,
+    datastoreStub;
 
-  var context = {
+  sandbox = sinon.sandbox.create();
+
+  context = {
     success: function(val) {},
-    failure: function(val) {}
+    failure: function(val) {},
   };
 
-  var mockContext;
+  gcloudObj = {
+    datastore: function() {},
+  }
+
+  datastore = {
+    get: function() {},
+    save: function() {},
+    key: function() {},
+    delete: function() {},
+  };
 
   beforeEach(function() {
-    mockContext = sinon.mock(context);
+    contextMock = sandbox.mock(context);
+    gcloud = sandbox.stub().returns(gcloudObj);
+    datastoreStub = sandbox.stub(gcloudObj, 'datastore').returns(
+      datastore);
+
+    var stubs = {
+      'gcloud': gcloud
+    };
+
+    // Require the module under test and stub out dependencies
+    mut = proxyquire('../index.js', stubs);
   });
 
   afterEach(function() {
-    mockContext.restore();
+    sandbox.restore();
   });
+
 
   it('Set fails without a value', function() {
 
-    mockContext.expects('failure').once().withArgs(
+    contextMock.expects('failure').once().withArgs(
       'Value not provided. Make sure you have a \'value\' property in your request'
     );
 
@@ -31,12 +62,12 @@ describe('Datastore Tests', function() {
 
     mut.set(context, data);
 
-    mockContext.verify();
+    contextMock.verify();
   });
 
   it('Set fails without a kind', function() {
 
-    mockContext.expects('failure').once().withArgs(
+    contextMock.expects('failure').once().withArgs(
       'Kind not provided. Make sure you have a \'kind\' property in your request'
     );
 
@@ -47,12 +78,12 @@ describe('Datastore Tests', function() {
 
     mut.set(context, data);
 
-    mockContext.verify();
+    contextMock.verify();
   });
 
   it('Set fails without a key', function() {
 
-    mockContext.expects('failure').once().withArgs(
+    contextMock.expects('failure').once().withArgs(
       'Key not provided. Make sure you have a \'key\' property in your request'
     );
 
@@ -63,12 +94,11 @@ describe('Datastore Tests', function() {
 
     mut.set(context, data);
 
-    mockContext.verify();
+    contextMock.verify();
   });
 
   it('Calling set correctly saves the object', function() {
 
-    // Setup some dummy values that we expect to be "written" to datastore
     var dsKey = 'foobar_ds_key';
     var dsValue = 'foobar_value';
 
@@ -78,52 +108,51 @@ describe('Datastore Tests', function() {
       'value': dsValue
     };
 
-    // Mock out gcloud so we can return a stub of the datastore client
-    var gcloud = require('gcloud');
+    var mockDatastore = sandbox.mock(datastore);
 
-    // Create a dummy datastore client
-    var datastore = {
-      'key': function() {},
-      'save': function(obj, callback) {}
-    };
-
-    // Stub out the real 'datastore' function to return our dummy
-    sinon.stub(gcloud, 'datastore').returns(datastore);
-
-    // Setup the exectations on the dummy client
-    var mockDatastore = sinon.mock(datastore);
-
-    // Make sure the key is created with the right values
     mockDatastore.expects("key").once().withArgs(['foobar_kind',
       'foobar_key'
     ]).returns(dsKey);
 
-    // Make sure the save occurs
-    // Make sure our mock still calls the callback (this is what datastore would do)
     mockDatastore.expects("save").once().withArgs({
       key: dsKey,
       data: dsValue
     }).callsArg(1);
 
-    // We also expect the result to be successful
-    mockContext.expects('success').once().withArgs('Entity saved');
+    contextMock.expects('success').once().withArgs('Entity saved');
 
-    var stubs = {
-      'gcloud': gcloud,
-    };
-
-    // Require the module under test and stub out gcloud
-    var mut = proxyquire('../index.js', stubs);
-
-    // Call the module under test
     mut.set(context, data);
 
-    // Verify that the methods we expected to be called were in-fact called
-    mockContext.verify();
+    contextMock.verify();
     mockDatastore.verify();
+  });
 
-    // Restore the stub for the next test
-    gcloud.datastore.restore();
+  it('Set fails if datastore save fails', function() {
+
+    var dsKey = 'foobar_ds_key';
+    var dsValue = 'foobar_value';
+    var err = 'foobar_error';
+
+    var data = {
+      'kind': 'foobar_kind',
+      'key': 'foobar_key',
+      'value': dsValue
+    };
+
+    var mockDatastore = sandbox.mock(datastore);
+
+    mockDatastore.expects("key").once().withArgs(['foobar_kind',
+      'foobar_key'
+    ]).returns(dsKey);
+
+    mockDatastore.expects("save").once().callsArgWith(1, err);
+
+    contextMock.expects('failure').once().withArgs(err);
+
+    mut.set(context, data);
+
+    contextMock.verify();
+    mockDatastore.verify();
   });
 
   it('Calling get correctly retrieves the object', function() {
@@ -137,55 +166,88 @@ describe('Datastore Tests', function() {
       'key': 'foobar_key'
     };
 
-    // Mock out gcloud so we can return a stub of the datastore client
-    var gcloud = require('gcloud');
+    var mockDatastore = sandbox.mock(datastore);
 
-    // Create a dummy datastore client
-    var datastore = {
-      'key': function() {},
-      'get': function(key, callback) {}
-    };
-
-    // Stub out the real 'datastore' function to return our dummy
-    sinon.stub(gcloud, 'datastore').returns(datastore);
-
-    // Setup the exectations on the dummy client
-    var mockDatastore = sinon.mock(datastore);
-
-    // Make sure the key is created with the right values
     mockDatastore.expects("key").once().withArgs(['foobar_kind',
       'foobar_key'
     ]).returns(dsKey);
 
-    // Make sure the get occurs
-    // Make sure our mock still calls the callback (this is what datastore would do)
     mockDatastore.expects("get").once().withArgs(dsKey).callsArgWith(1,
       null, dsEntity);
 
-    // We also expect the result to be successful
-    mockContext.expects('success').once().withArgs(dsEntity);
+    contextMock.expects('success').once().withArgs(dsEntity);
 
-    var stubs = {
-      'gcloud': gcloud,
-    };
-
-    // Require the module under test and stub out gcloud
-    var mut = proxyquire('../index.js', stubs);
-
-    // Call the module under test
     mut.get(context, data);
 
-    // Verify that the methods we expected to be called were in-fact called
-    mockContext.verify();
+    contextMock.verify();
     mockDatastore.verify();
-
-    // Restore the stub for the next test
-    gcloud.datastore.restore();
   });
+
+  it('Get fails if datastore get returns null', function() {
+
+    var dsKey = {
+      path: 'foobar_key_path'
+    };
+
+    var dsEntity = 'foobar_entity';
+
+    var data = {
+      'kind': 'foobar_kind',
+      'key': 'foobar_key'
+    };
+
+    var mockDatastore = sandbox.mock(datastore);
+
+    mockDatastore.expects("key").once().withArgs(['foobar_kind',
+      'foobar_key'
+    ]).returns(dsKey);
+
+    mockDatastore.expects("get").once().withArgs(dsKey).callsArgWith(1,
+      null, null);
+
+    contextMock.expects('failure').once().withArgs(
+      'No entity found for key foobar_key_path');
+
+    mut.get(context, data);
+
+    contextMock.verify();
+    mockDatastore.verify();
+  });
+
+  it('Get fails if datastore get fails', function() {
+
+    var err = 'foobar_error';
+
+    var dsKey = {
+      path: 'foobar_key_path'
+    };
+
+    var dsEntity = 'foobar_entity';
+
+    var data = {
+      'kind': 'foobar_kind',
+      'key': 'foobar_key'
+    };
+
+    var mockDatastore = sandbox.mock(datastore);
+
+    mockDatastore.expects("key").once().withArgs(['foobar_kind',
+      'foobar_key'
+    ]).returns(dsKey);
+
+    mockDatastore.expects("get").once().withArgs(dsKey).callsArgWith(1, err);
+
+    contextMock.expects('failure').once().withArgs(err);
+
+    mut.get(context, data);
+
+    contextMock.verify();
+    mockDatastore.verify();
+  });
+
 
   it('Calling del correctly deletes the object', function() {
 
-    // Setup some dummy values
     var dsKey = 'foobar_ds_key';
     var dsApiResponse = 'foobar_api_response'
 
@@ -194,49 +256,120 @@ describe('Datastore Tests', function() {
       'key': 'foobar_key'
     };
 
-    // Mock out gcloud so we can return a stub of the datastore client
-    var gcloud = require('gcloud');
+    var mockDatastore = sandbox.mock(datastore);
 
-    // Create a dummy datastore client
-    var datastore = {
-      'key': function() {},
-      'delete': function(key, callback) {}
-    };
-
-    // Stub out the real 'datastore' function to return our dummy
-    sinon.stub(gcloud, 'datastore').returns(datastore);
-
-    // Setup the exectations on the dummy client
-    var mockDatastore = sinon.mock(datastore);
-
-    // Make sure the key is created with the right values
     mockDatastore.expects("key").once().withArgs(['foobar_kind',
       'foobar_key'
     ]).returns(dsKey);
 
-    // Make sure the get occurs
-    // Make sure our mock still calls the callback (this is what datastore would do)
     mockDatastore.expects("delete").once().withArgs(dsKey).callsArgWith(
       1, null, dsApiResponse);
 
-    // We also expect the result to be successful
-    mockContext.expects('success').once().withArgs('Entity deleted');
+    contextMock.expects('success').once().withArgs('Entity deleted');
 
-    var stubs = {
-      'gcloud': gcloud,
-    };
-
-    // Require the module under test and stub out gcloud
-    var mut = proxyquire('../index.js', stubs);
-
-    // Call the module under test
     mut.del(context, data);
 
-    // Verify that the methods we expected to be called were in-fact called
-    mockContext.verify();
+    contextMock.verify();
     mockDatastore.verify();
-
-    // Restore the stub for the next test
-    gcloud.datastore.restore();
   });
+
+  it('Del fails if datastore delete fails', function() {
+
+    var dsKey = 'foobar_ds_key';
+    var dsApiResponse = 'foobar_api_response';
+    var err = 'foobar_error';
+
+    var data = {
+      'kind': 'foobar_kind',
+      'key': 'foobar_key'
+    };
+
+    var mockDatastore = sandbox.mock(datastore);
+
+    mockDatastore.expects("key").once().withArgs(['foobar_kind',
+      'foobar_key'
+    ]).returns(dsKey);
+
+    mockDatastore.expects("delete").once().callsArgWith(
+      1, err);
+
+    contextMock.expects('failure').once().withArgs(err);
+
+    mut.del(context, data);
+
+    contextMock.verify();
+    mockDatastore.verify();
+  });
+
+
+  it('Set fails when no key is provided', function() {
+    _testNullKeyForMethod("save", mut.set);
+  });
+
+  it('Set fails when no kind is provided', function() {
+    _testNullKindForMethod("save", mut.set);
+  });
+
+  it('Get fails when no key is provided', function() {
+    _testNullKeyForMethod("get", mut.get);
+  });
+
+  it('Get fails when no kind is provided', function() {
+    _testNullKindForMethod("get", mut.get);
+  });
+
+  it('Del fails when no key is provided', function() {
+    _testNullKeyForMethod("delete", mut.del);
+  });
+
+  it('Del fails when no kind is provided', function() {
+    _testNullKindForMethod("delete", mut.del);
+  });
+
+  // Common test impl reused in various module method tests
+  var _testNullKindForMethod = function(strExpectedMethod, funcModuleFunction) {
+
+    var data = {
+      'key': 'foobar_key',
+      'value': 'foobar_value'
+    };
+
+    var mockDatastore = sandbox.mock(datastore);
+
+    mockDatastore.expects("key").never();
+    mockDatastore.expects(strExpectedMethod).never();
+
+    contextMock.expects('failure').once().withArgs(
+      'Kind not provided. Make sure you have a \'kind\' property in your request'
+    );
+
+    // Call the module under test
+    funcModuleFunction.call(this, context, data);
+
+    contextMock.verify();
+    mockDatastore.verify();
+  }
+
+  var _testNullKeyForMethod = function(strExpectedMethod, funcModuleFunction) {
+
+    var data = {
+      'kind': 'foobar_kind',
+      'value': 'foobar_value'
+    };
+
+    var mockDatastore = sandbox.mock(datastore);
+
+    mockDatastore.expects("key").never();
+    mockDatastore.expects(strExpectedMethod).never();
+
+    contextMock.expects('failure').once().withArgs(
+      'Key not provided. Make sure you have a \'key\' property in your request'
+    );
+
+    // Call the module under test
+    funcModuleFunction.call(this, context, data);
+
+    contextMock.verify();
+    mockDatastore.verify();
+  }
 });

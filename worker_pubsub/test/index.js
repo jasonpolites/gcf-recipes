@@ -7,6 +7,7 @@ var testUtils = require('./testutils');
 describe('Master Worker Tests - Pub/Sub', function() {
 
   var
+    sandbox,
     mut,
     mutMock,
     gcloud,
@@ -14,9 +15,15 @@ describe('Master Worker Tests - Pub/Sub', function() {
     context,
     contextMock;
 
+
+  sandbox = sinon.sandbox.create();
+
   beforeEach(function() {
 
-    gcloud = require('gcloud');
+    gcloud = {
+      pubsub: function() {},
+      storage: function() {}
+    };
     readLine = require('readline');
 
     context = {
@@ -32,14 +39,12 @@ describe('Master Worker Tests - Pub/Sub', function() {
     // Require the module under test and stub out dependencies
     mut = proxyquire('../index.js', stubs);
 
-    contextMock = sinon.mock(context);
-    mutMock = sinon.mock(mut);
-
+    contextMock = sandbox.mock(context);
+    mutMock = sandbox.mock(mut);
   });
 
   afterEach(function() {
-    contextMock.restore();
-    mutMock.restore();
+    sandbox.restore();
   });
 
   describe('Public Interface Tests', function() {
@@ -80,24 +85,15 @@ describe('Master Worker Tests - Pub/Sub', function() {
         'name': 'foobar_file'
       };
 
-      sinon.stub(gcloud, 'pubsub').returns(pubsub);
-      sinon.stub(gcloud, 'storage').returns(storage);
-      sinon.stub(storage, 'bucket').returns(bucket);
-      sinon.stub(bucket, 'file').returns(file);
+      sandbox.stub(gcloud, 'pubsub').returns(pubsub);
+      sandbox.stub(gcloud, 'storage').returns(storage);
+      sandbox.stub(storage, 'bucket').returns(bucket);
+      sandbox.stub(bucket, 'file').returns(file);
 
-      pubsubMock = sinon.mock(pubsub);
-      inTopicMock = sinon.mock(inTopic);
-      outTopicMock = sinon.mock(outTopic);
+      pubsubMock = sandbox.mock(pubsub);
+      inTopicMock = sandbox.mock(inTopic);
+      outTopicMock = sandbox.mock(outTopic);
     });
-
-    afterEach(function() {
-      pubsubMock.restore();
-      inTopicMock.restore();
-      outTopicMock.restore();
-      gcloud.pubsub.restore();
-      gcloud.storage.restore();
-    });
-
 
     it('Master processes source file and waits for results', function() {
 
@@ -230,6 +226,42 @@ describe('Master Worker Tests - Pub/Sub', function() {
         1);
       contextMock.expects('success').once().withArgs('8');
       contextMock.expects('failure').never();
+
+      mut.worker(context, data);
+
+      pubsubMock.verify();
+      outTopicMock.verify();
+      contextMock.verify();
+    });
+
+
+    it('Worker fails if pubsub publish fails', function() {
+
+      var err = 'foobar_error';
+
+      var line = 'Shall I compare thee to a summer\'s day?';
+
+      var outTopicName = 'foobar_out_topic';
+
+      var data = {
+        'batch': [line],
+        'out-topic': outTopicName,
+        'worker': 'foobar_worker'
+      };
+
+      var expected = {
+        data: {
+          count: 8,
+          worker: 'foobar_worker'
+        }
+      };
+
+      pubsubMock.expects('topic').once().withArgs(outTopicName).returns(
+        outTopic);
+      outTopicMock.expects('publish').once().withArgs(expected).callsArgWith(
+        1, err);
+      contextMock.expects('failure').once().withArgs(err);
+      contextMock.expects('success').never();
 
       mut.worker(context, data);
 

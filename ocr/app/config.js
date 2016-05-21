@@ -3,7 +3,14 @@
  *****************************************************************************/
 
 // Set your Google translate API key
-var translateApiKey = require('./translate_apikey.json')
+var translateApiKey = "<API KEY>";
+
+try {
+    translateApiKey = require('./translate_apikey.json');
+} catch (e) {
+    console.error('Could not find a local translate_apikey.json file.  ' +
+        'Make sure you create a Translate API key and add it to your module');
+}
 
 module.exports = function(projectId) {
     return {

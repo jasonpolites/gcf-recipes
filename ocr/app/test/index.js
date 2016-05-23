@@ -31,8 +31,6 @@ describe('OCR Tests', function() {
     file,
     url;
 
-  // gcloud = require('gcloud');
-
   sandbox = sinon.sandbox.create();
 
   context = {
@@ -99,8 +97,7 @@ describe('OCR Tests', function() {
     visionStub = sandbox.stub(gcloudObj, 'vision').returns(vision);
     pubsubStub = sandbox.stub(gcloudObj, 'pubsub').returns(pubsub);
     topicStub = sandbox.stub(pubsub, 'topic').returns(topic);
-    translateStub = sandbox.stub(gcloudObj, 'translate').returns(
-      translate);
+    translateStub = sandbox.stub(gcloudObj, 'translate').returns(translate);
     bucketStub = sandbox.stub(storage, 'bucket').returns(bucket);
     fileStub = sandbox.stub(bucket, 'file').returns(file);
 

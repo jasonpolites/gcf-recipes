@@ -4,7 +4,8 @@
   "description": "Google Cloud Functions Recipes - Cloud Datastore",
   "main": "index.js",
   "scripts": {
-    "test": "NODE_ENV=test istanbul cover -x logger.js _mocha test/ --recursive"
+    "pretest": "npm install",
+    "test": "NODE_ENV=test istanbul cover -x logger.js _mocha test/"
   },
   "keywords": [
     "cloud",

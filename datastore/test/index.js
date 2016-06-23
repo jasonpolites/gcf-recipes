@@ -60,7 +60,7 @@ describe('Datastore Tests', function() {
 
     var data = {};
 
-    mut.set(context, data);
+    mut._set(context, data);
 
     contextMock.verify();
   });
@@ -76,7 +76,7 @@ describe('Datastore Tests', function() {
       'key': 'foobar_key'
     };
 
-    mut.set(context, data);
+    mut._set(context, data);
 
     contextMock.verify();
   });
@@ -92,7 +92,7 @@ describe('Datastore Tests', function() {
       'kind': 'foobar_kind'
     };
 
-    mut.set(context, data);
+    mut._set(context, data);
 
     contextMock.verify();
   });
@@ -121,7 +121,7 @@ describe('Datastore Tests', function() {
 
     contextMock.expects('success').once().withArgs('Entity saved');
 
-    mut.set(context, data);
+    mut._set(context, data);
 
     contextMock.verify();
     mockDatastore.verify();
@@ -149,7 +149,7 @@ describe('Datastore Tests', function() {
 
     contextMock.expects('failure').once().withArgs(err);
 
-    mut.set(context, data);
+    mut._set(context, data);
 
     contextMock.verify();
     mockDatastore.verify();
@@ -177,7 +177,7 @@ describe('Datastore Tests', function() {
 
     contextMock.expects('success').once().withArgs(dsEntity);
 
-    mut.get(context, data);
+    mut._get(context, data);
 
     contextMock.verify();
     mockDatastore.verify();
@@ -208,7 +208,7 @@ describe('Datastore Tests', function() {
     contextMock.expects('failure').once().withArgs(
       'No entity found for key foobar_key_path');
 
-    mut.get(context, data);
+    mut._get(context, data);
 
     contextMock.verify();
     mockDatastore.verify();
@@ -235,11 +235,12 @@ describe('Datastore Tests', function() {
       'foobar_key'
     ]).returns(dsKey);
 
-    mockDatastore.expects("get").once().withArgs(dsKey).callsArgWith(1, err);
+    mockDatastore.expects("get").once().withArgs(dsKey).callsArgWith(1,
+      err);
 
     contextMock.expects('failure').once().withArgs(err);
 
-    mut.get(context, data);
+    mut._get(context, data);
 
     contextMock.verify();
     mockDatastore.verify();
@@ -267,7 +268,7 @@ describe('Datastore Tests', function() {
 
     contextMock.expects('success').once().withArgs('Entity deleted');
 
-    mut.del(context, data);
+    mut._del(context, data);
 
     contextMock.verify();
     mockDatastore.verify();
@@ -295,39 +296,39 @@ describe('Datastore Tests', function() {
 
     contextMock.expects('failure').once().withArgs(err);
 
-    mut.del(context, data);
+    mut._del(context, data);
 
     contextMock.verify();
     mockDatastore.verify();
   });
 
-
   it('Set fails when no key is provided', function() {
-    _testNullKeyForMethod("save", mut.set);
+    _testNullKeyForMethod("save", mut._set);
   });
 
   it('Set fails when no kind is provided', function() {
-    _testNullKindForMethod("save", mut.set);
+    _testNullKindForMethod("save", mut._set);
   });
 
   it('Get fails when no key is provided', function() {
-    _testNullKeyForMethod("get", mut.get);
+    _testNullKeyForMethod("get", mut._get);
   });
 
   it('Get fails when no kind is provided', function() {
-    _testNullKindForMethod("get", mut.get);
+    _testNullKindForMethod("get", mut._get);
   });
 
   it('Del fails when no key is provided', function() {
-    _testNullKeyForMethod("delete", mut.del);
+    _testNullKeyForMethod("delete", mut._del);
   });
 
   it('Del fails when no kind is provided', function() {
-    _testNullKindForMethod("delete", mut.del);
+    _testNullKindForMethod("delete", mut._del);
   });
 
   // Common test impl reused in various module method tests
-  var _testNullKindForMethod = function(strExpectedMethod, funcModuleFunction) {
+  var _testNullKindForMethod = function(strExpectedMethod,
+    funcModuleFunction) {
 
     var data = {
       'key': 'foobar_key',
@@ -350,7 +351,8 @@ describe('Datastore Tests', function() {
     mockDatastore.verify();
   }
 
-  var _testNullKeyForMethod = function(strExpectedMethod, funcModuleFunction) {
+  var _testNullKeyForMethod = function(strExpectedMethod,
+    funcModuleFunction) {
 
     var data = {
       'kind': 'foobar_kind',

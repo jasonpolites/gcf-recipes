@@ -13,10 +13,36 @@ var datastore = null;
 
 var self = {
 
+  set: function(req, res) {
+    self._httpBinder(req, res, self._set);
+  },
+
+  get: function(req, res) {
+    self._httpBinder(req, res, self._get);
+  },
+
+  del: function(req, res) {
+    self._httpBinder(req, res, self._del);
+  },
+
+  /**
+   * Simple binder function to cater for new HTTP function signatures.
+   **/
+  _httpBinder: function(req, res, fn) {
+    fn({
+      success: function(val) {
+        res.send(val);
+      },
+      failure: function(val) {
+        res.status(500).send(val);
+      }
+    }, req.body);
+  },
+
   /**
    * Creates and/or updates a record
    */
-  set: function(context, data) {
+  _set: function(context, data) {
 
     // The value contains a JSON document representing the entity we want to save
     var value = data['value'];
@@ -49,7 +75,7 @@ var self = {
   /**
    * Retrieves a record
    */
-  get: function(context, data) {
+  _get: function(context, data) {
 
     self._getEntity(data, function(err, dsKey, entity) {
       if (err) {
@@ -70,7 +96,7 @@ var self = {
   /**
    * Deletes a record
    */
-  del: function(context, data) {
+  _del: function(context, data) {
     self._getKeyFromData(data, function(err, k) {
       if (err) {
         logger.error(err);
@@ -157,4 +183,5 @@ var self = {
     }, callback);
   }
 };
+
 module.exports = self;

@@ -48,6 +48,10 @@ Where applicable:
 
 		gcloud alpha functions call mapr-master --data '{"bucket": "[PROJECT-ID]-gcf-recipes-bucket", "file": "sample.txt", "workerFunctionUrl": "https://[REGION].[PROJECT-ID].cloudfunctions.net/mapr-worker"}'
 
+8. 	Alternatively because we deployed the functions with HTTP Triggers, you can just cURL the master function
+
+		curl -X POST -H "Content-Type:application/json" https://[REGION].[PROJECT-ID].cloudfunctions.net/mapr-master --data '{"bucket": "[PROJECT-ID]-gcf-recipes-bucket", "file": "sample.txt", "workerFunctionUrl": "https://[REGION].[PROJECT-ID].cloudfunctions.net/mapr-worker"}'
+
 	You can determine the region and URL of your function by using the *describe* command
 
 		gcloud alpha functions describe mapr-worker

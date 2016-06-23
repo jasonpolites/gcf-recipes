@@ -10,10 +10,34 @@ var logger = require('./logger');
 // Use a simple shared key to assert calling authority.
 var SHARED_KEY = 'some_random_high_entropy_string';
 
+// HTTP Binding for worker function
+var worker = function(req, res) {
+  _httpBinder(req, res, _worker);
+};
+
+// HTTP Binding for master function
+var master = function(req, res) {
+  _httpBinder(req, res, _master);
+};
+
+/**
+ * Simple binder function to cater for new HTTP function signatures.
+ **/
+var _httpBinder = function(req, res, fn) {
+  fn({
+    success: function(val) {
+      res.send(val);
+    },
+    failure: function(val) {
+      res.status(500).send(val);
+    }
+  }, req.body);
+};
+
 /**
  * Counts the number of words in the line.
  */
-var worker = function(context, data) {
+var _worker = function(context, data) {
 
   // Simple shared key to authorize the caller
   var key = data['key'];
@@ -43,7 +67,7 @@ var worker = function(context, data) {
 /**
  * Reads the source file and fans out to the mappers.
  */
-var master = function(context, data) {
+var _master = function(context, data) {
 
   // Create a gcs client
   var gcs = gcloud.storage({
@@ -142,4 +166,6 @@ module.exports = {
   worker: worker,
   master: master,
   invoke: invoke,
+  _worker: _worker,
+  _master: _master,
 };

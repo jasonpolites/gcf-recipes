@@ -20,7 +20,7 @@ describe('Master Worker Tests - HTTP', function() {
     var mock = sinon.mock(context);
     mock.expects('failure').once().withArgs('Invalid key');
 
-    mut.worker(context, data);
+    mut._worker(context, data);
 
     mock.verify();
 
@@ -44,7 +44,7 @@ describe('Master Worker Tests - HTTP', function() {
         throw new Error(val);
       }
     };
-    mut.worker(context, data);
+    mut._worker(context, data);
     chai.expect(value).to.equal('8');
   });
 
@@ -139,6 +139,6 @@ describe('Master Worker Tests - HTTP', function() {
 
     // Now call the module under test.  Assertions will happen in the callback, 
     // and the test will timeout if the callback is not called.
-    mut.master(context, data);
+    mut._master(context, data);
   });
 });

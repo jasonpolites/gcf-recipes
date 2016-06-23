@@ -1,0 +1,32 @@
+<html>
+<head>
+<script   
+  src="https://code.jquery.com/jquery-2.2.4.min.js"   
+  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="   
+  crossorigin="anonymous"></script>
+<script>
+  function doCall() {
+    var name=$('#name').val();
+    if(name) {
+      $.ajax({
+        url: '/httpCORSTest',
+        success: function (data, textStatus, jqXHR) {
+          $('#result').text(data);
+        },
+        error: function ( jqXHR, textStatus, errorThrown) {
+          console.error(errorThrown);
+        },
+        method: 'PUT',
+        data: name,
+        contentType: 'text/plain'
+      });
+    }
+  }
+</script>
+</head>
+<body>
+<input id="name" placeholder="Enter your name"></input>
+<button onclick="doCall(); return false;">Say Hello!</button>
+<div id="result"/>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "name": "gcf-emulator",
+  "version": "1.0.0",
+  "description": "Cloud Functions Local Emulator",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^2.9.0",
+    "express": "^4.14.0",
+    "simple-node-logger": "^0.93.12",
+    "winston": "^2.2.0"
+  },
+  "bin": {
+    "functions": "./index.js"
+  }
+}

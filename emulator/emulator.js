@@ -1,328 +1,198 @@
-var DEFAULT_PORT = '8080';
+var util = require('util')
+var express = require('express');
+var bodyParser = require('body-parser');
+const path = require('path');
+var log = require('simple-node-logger').createSimpleLogger('emulator.log');
+var port = process.argv[2];
+var app = express();
+var jsonfile = require('jsonfile');
+var fs = require('fs');
 
-var functions = {};
+var server;
+var DEPLOYED_FUNCTIONS_FILE = './functions.json';
 
-var request = require('request');
-var colors = require('colors');
-var net = require('net');
-var spawn = require('child_process').spawn;
-var Table = require('cli-table2');
+function logErrors(err, req, res, next) {
+  console.error(err.stack);
+  next(err);
+}
 
-var self = {
-  start: function() {
-    startEmulator(DEFAULT_PORT, function(err) {
-      if (!err) {
-        self.list();
-      }
-    });
-  },
-  stop: function() {
-    doIfRunning(function() {
-      stopEmulator(DEFAULT_PORT);
-    });
-  },
-  restart: function() {
-    checkStatus(DEFAULT_PORT, function(err) {
-      if (err) {
-        self.start()
-      } else {
-        stopEmulator(DEFAULT_PORT, function(err) {
-          if (err) {
-            console.error(err);
-            return;
-          }
-          self.start();
-        });
-      }
-    });
-  },
-  clear: function() {
-    // Remove the deployed functions
-    action('DELETE', 'http://localhost:' + DEFAULT_PORT + '/function/',
-      function(err) {
-        if (err) {
-          console.error(err);
-          console.error('Clear command aborted'.red);
-          return;
-        }
+process.on('uncaughtException', function(err) {
+  console.error((new Date).toUTCString() + ' uncaughtException:', err.message)
+  console.error(err.stack);
+  setTimeout(function() {
+    process.exit(1);
+  }, 1000);
+})
 
-        process.stdout.write("Emulator ");
-        process.stdout.write('CLEARED\n'.green);
-      });
-  },
-  status: function() {
-    checkStatus(DEFAULT_PORT, function(err) {
-      process.stdout.write("Emulator is ");
-      if (err) {
-        process.stdout.write("STOPPED\n".red);
-        return;
-      }
-      process.stdout.write("RUNNING\n".green);
-    });
-  },
-  deploy: function(modulePath, entryPoint, options) {
-    // console.log(options.type);
-    action('POST', 'http://localhost:' + DEFAULT_PORT + '/function/' + entryPoint +
-      '?path=' + modulePath +
-      '&type=' + options.type,
-      function(err, body) {
-        if (err) {
-          console.error(err);
-          console.error('Deployment aborted'.red);
-          return;
-        }
-        console.log('Function ' + entryPoint + ' deployed'.green);
-        printDescribe(body);
-      });
-  },
-  undeploy: function(fnName) {
-    action('DELETE', 'http://localhost:' + DEFAULT_PORT + '/function/' +
-      fnName,
-      function(err) {
-        if (err) {
-          console.error(err);
-          console.error('Undeploy aborted'.red);
-          return;
-        }
-        console.log('Function ' + fnName + ' removed'.green);
-      });
-  },
-  list: function() {
-    action('GET', 'http://localhost:' + DEFAULT_PORT + '/function',
-      function(err, body) {
-        if (err) {
-          console.error(err);
-          return;
-        }
+app.use(logErrors);
+app.use(bodyParser.json());
+app.use(bodyParser.raw());
+app.use(bodyParser.text());
+app.use(bodyParser.urlencoded({
+  extended: true
+}));
 
-        body = JSON.parse(body);
-
-        var table = new Table({
-          head: ['Name'.cyan, 'Type'.cyan, 'Path'.cyan],
-          colWidths: [20, 12, 60]
-        });
-
-        var type, path;
-        var count = 0;
-
-        for (var func in body) {
-
-          type = body[func].type;
-          path = body[func].path;
-
-          table.push([
-            func,
-            type,
-            path
-          ]);
-
-          count++;
-        }
-
-        if (count === 0) {
-          table.push([{
-            colSpan: 3,
-            content: 'No functions deployed.  Run \'functions deploy\' to deploy a function to the emulator'
-              .gray
-          }]);
-        }
-        console.log(table.toString());
-      });
-  },
-  describe: function(name) {
-    action('GET', 'http://localhost:' + DEFAULT_PORT + '/function/' + name,
-      function(err, body) {
-        if (err) {
-          console.error(err);
-          return;
-        }
-        printDescribe(body);
-      });
-  },
-  call: function(name, options) {
-    action('POST', 'http://localhost:' + DEFAULT_PORT + '/' + name,
-      function(err, body) {
-        if (err) {
-          console.error(err);
-          return;
-        }
-        console.log(body);
-      }, options.data);
-  }
+// Override console logger
+function formatArgs(args) {
+  return [util.format.apply(util.format, Array.prototype.slice.call(args))];
+}
+console.log = function() {
+  log.info.apply(log, formatArgs(arguments));
+};
+console.error = function() {
+  log.error.apply(log, formatArgs(arguments));
+};
+console.debug = function() {
+  log.debug.apply(log, formatArgs(arguments));
 };
 
-module.exports = self;
+console.debug('Starting emulator on port ' + port + '...');
 
-var printDescribe = function printDescribe(body) {
-  body = JSON.parse(body);
-
-  var table = new Table({
-    head: ['Property'.cyan, 'Value'.cyan],
-    colWidths: [10, 60]
-  });
-
-  table.push(['Name', body.name]);
-  table.push(['Type', body.type]);
-  table.push(['Path', body.path]);
-
-  if (body.url) {
-    table.push(['Url', body.url.green]);
+try {
+  fs.statSync(DEPLOYED_FUNCTIONS_FILE);
+} catch (e) {
+  if (e.code === 'ENOENT') {
+    jsonfile.writeFileSync(DEPLOYED_FUNCTIONS_FILE, {});
+  } else {
+    throw e;
   }
-  console.log(table.toString());
 }
 
-var action = function action(method, uri, callback, data) {
-  checkStatus(DEFAULT_PORT, function(err) {
-    if (err) {
-      callback(
-        'Emulator is not running.  Use \'functions start\' to start the emulator'
-      );
-      return;
-    }
+var functions = jsonfile.readFileSync(DEPLOYED_FUNCTIONS_FILE);
 
-    var options = {
-      method: method,
-      url: uri
+app.get('/', function(req, res) {
+  res.send('Cloud Functions Emulator');
+});
+
+app.delete('/', function(req, res) {
+  server.close();
+  console.debug('Server stopped');
+  res.status(200).end();
+  process.exit();
+});
+
+app.post("/function/:name", function(req, res) {
+  // deploy
+  var p = path.resolve(req.query.path);
+  var name = req.params.name;
+
+  console.debug('Loading module in path ' + p)
+  var mod = require(p);
+
+  if (!mod[name]) {
+    res.status(404).send('No function found in module ' + req.query.path +
+      ' with name ' + name);
+    return;
+  }
+
+  var type = req.query.type.toUpperCase();
+  var url = null;
+
+  if (type === 'B') {
+    type = 'BACKGROUND';
+  } else if (type === 'H') {
+    type = 'HTTP'
+  }
+
+  if (type === 'HTTP') {
+    url = 'http://localhost:' + port + '/' + name
+  }
+
+  try {
+    functions[name] = {
+      name: name,
+      // mod: mod,
+      path: p,
+      type: type,
+      url: url
     };
 
-    if (method === 'POST' && data) {
-      options.json = JSON.parse(data);
-    }
+    jsonfile.writeFileSync(DEPLOYED_FUNCTIONS_FILE, functions);
 
-    request(options,
-      function(error, response, body) {
-        if (!error && response.statusCode === 200) {
-          callback(null, body)
-        } else {
-          callback(body);
-        }
-      });
-  });
-}
+    console.debug('Deployed function ' + name + ' at path ' + p);
+    res.json(functions[name]);
+  } catch (err) {
+    console.debug(err.stack);
+    res.status(400).send(err.message);
+  }
+});
 
-var doIfRunning = function doIfRunning(fn) {
-  checkStatus(DEFAULT_PORT, function(err) {
-    if (err) {
-      console.log('Emulator is not running');
-      return;
-    }
-    fn();
-  });
-}
+app.delete("/function", function(req, res) {
+  // undeploy
+  functions = {};
+  jsonfile.writeFileSync(DEPLOYED_FUNCTIONS_FILE, {});
+  console.debug('Cleared all deployed functions');
+  res.status(200).end();
+});
 
-var startEmulator = function startEmulator(port, callback) {
+app.delete("/function/:name", function(req, res) {
+  // undeploy
+  delete functions[req.params.name];
+  jsonfile.writeFileSync(DEPLOYED_FUNCTIONS_FILE, functions);
+  console.debug('Undeployed function ' + req.params.name);
+  res.status(200).end();
+});
 
-  checkStatus(DEFAULT_PORT, function(err) {
-    if (err) {
-      console.log('Starting Emulator on port ' + port + '...');
+app.get("/function", function(req, res) {
+  res.json(functions);
+});
 
-      var child = spawn('node', ['server.js', port], {
-        detached: true,
-        stdio: 'ignore'
-      });
+app.get("/function/:name", function(req, res) {
+  var name = req.params.name;
+  if (functions[name]) {
+    res.json(functions[name]);
+    return;
+  }
+  res.sendStatus(404);
+});
 
-      child.unref();
+app.all("/*", function(req, res) {
 
-      waitForStart(port, 5000, function(err) {
-        if (err) {
-          console.error(err);
-          if (callback) {
-            callback(err);
+  var fn = req.path.substring(1, req.path.length);
+
+  console.debug('Executing ' + req.method + ' on function ' + fn);
+
+  var record = functions[fn];
+
+  if (record) {
+
+    delete require.cache[require.resolve(record.path)];
+    var mod = require(record.path);
+
+    var func = mod[fn];
+    var type = record.type;
+
+    if (type === 'HTTP') {
+      // Pass through HTTP
+      func.call(this, req, res);
+    } else {
+      // BACKGROUND
+      var context = {
+        success: function(val) {
+          res.status(200).json(val);
+          // global.gc();
+        },
+        failure: function(val) {
+          res.status(500).json(val);
+          // global.gc();
+        },
+        done: function(val) {
+          if (val) {
+            context.failure(val);
+            return;
           }
-          return;
+          context.success();
         }
-        process.stdout.write("Emulator ");
-        process.stdout.write('STARTED\n'.green);
-        if (callback) {
-          callback();
-        }
-      });
-    } else {
-      console.log('Emulator already running'.cyan);
+      };
+
+      func.call(this, context, req.body);
     }
-  });
-}
-
-var stopEmulator = function stopEmulator(port, callback) {
-  request.del('http://localhost:' + port, function(error, response, body) {
-    if (!error && response.statusCode == 200) {
-
-      waitForStop(port, 5000, function(err) {
-        if (err) {
-          console.error('Timeout waiting for server to stop');
-          callback(err);
-          return;
-        }
-
-        process.stdout.write("Emulator ");
-        process.stdout.write('STOPPED\n'.red);
-        if (callback) {
-          callback();
-        }
-      });
-    } else {
-      console.error(error);
-      if (callback) {
-        callback(error);
-      }
-    }
-  });
-}
-
-var waitForStop = function waitForStart(port, timeout, callback, i) {
-  if (!i) {
-    i = timeout / 500;
+  } else {
+    res.status(404).send('No function with name ' + fn);
   }
+});
 
-  checkStatus(port, function(err) {
-    if (err) {
-      callback();
-      return;
-    }
 
-    i--;
-
-    if (i <= 0) {
-      callback('Timeout waiting for server start');
-      return;
-    }
-
-    setTimeout(function() {
-      waitForStart(port, timeout, callback, i);
-    }, 500);
-  });
-}
-
-var waitForStart = function waitForStart(port, timeout, callback, i) {
-  if (!i) {
-    i = timeout / 500;
-  }
-
-  checkStatus(port, function(err) {
-    if (!err) {
-      callback();
-      return;
-    }
-
-    i--;
-
-    if (i <= 0) {
-      callback('Timeout waiting for server start');
-      return;
-    }
-
-    setTimeout(function() {
-      waitForStart(port, timeout, callback, i);
-    }, 500);
-  });
-}
-
-var checkStatus = function checkStatus(port, callback) {
-  var client = net.connect(port, 'localhost', function() {
-    client.end();
-    callback();
-  });
-  client.on('error', function(ex) {
-    callback(ex);
-  });
-}
+var server = app.listen(port, function() {
+  console.debug('Server started');
+});

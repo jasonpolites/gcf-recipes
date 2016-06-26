@@ -3,13 +3,18 @@ var DEFAULT_PORT = '8080';
 var functions = {};
 
 var request = require('request');
-
+var colors = require('colors');
 var net = require('net');
 var spawn = require('child_process').spawn;
+var Table = require('cli-table2');
 
-module.exports = {
+var self = {
   start: function() {
-    startEmulator(DEFAULT_PORT);
+    startEmulator(DEFAULT_PORT, function(err) {
+      if (!err) {
+        self.list();
+      }
+    });
   },
   stop: function() {
     doIfRunning(function() {
@@ -19,51 +24,154 @@ module.exports = {
   restart: function() {
     checkStatus(DEFAULT_PORT, function(err) {
       if (err) {
-        startEmulator(DEFAULT_PORT);
+        self.start()
       } else {
         stopEmulator(DEFAULT_PORT, function(err) {
           if (err) {
             console.error(err);
             return;
           }
-          startEmulator(DEFAULT_PORT);
+          self.start();
         });
       }
     });
+  },
+  clear: function() {
+    // Remove the deployed functions
+    action('DELETE', 'http://localhost:' + DEFAULT_PORT + '/function/',
+      function(err) {
+        if (err) {
+          console.error(err);
+          console.error('Clear command aborted'.red);
+          return;
+        }
 
+        process.stdout.write("Emulator ");
+        process.stdout.write('CLEARED\n'.green);
+      });
   },
   status: function() {
     checkStatus(DEFAULT_PORT, function(err) {
+      process.stdout.write("Emulator is ");
       if (err) {
-        console.log('Emulator is STOPPED');
+        process.stdout.write("STOPPED\n".red);
         return;
       }
-      console.log('Emulator is RUNNING');
+      process.stdout.write("RUNNING\n".green);
     });
   },
-  deploy: function(modulePath, entryPoint) {
-    action('POST', 'http://localhost:' + DEFAULT_PORT + '/function?name=' +
-      entryPoint +
-      '&path=' + modulePath,
+  deploy: function(modulePath, entryPoint, options) {
+    // console.log(options.type);
+    action('POST', 'http://localhost:' + DEFAULT_PORT + '/function/' + entryPoint +
+      '?path=' + modulePath +
+      '&type=' + options.type,
+      function(err, body) {
+        if (err) {
+          console.error(err);
+          console.error('Deployment aborted'.red);
+          return;
+        }
+        console.log('Function ' + entryPoint + ' deployed'.green);
+        printDescribe(body);
+      });
+  },
+  undeploy: function(fnName) {
+    action('DELETE', 'http://localhost:' + DEFAULT_PORT + '/function/' +
+      fnName,
       function(err) {
+        if (err) {
+          console.error(err);
+          console.error('Undeploy aborted'.red);
+          return;
+        }
+        console.log('Function ' + fnName + ' removed'.green);
+      });
+  },
+  list: function() {
+    action('GET', 'http://localhost:' + DEFAULT_PORT + '/function',
+      function(err, body) {
         if (err) {
           console.error(err);
           return;
         }
-        console.log('Function ' + entryPoint + ' deployed');
+
+        body = JSON.parse(body);
+
+        var table = new Table({
+          head: ['Name'.cyan, 'Type'.cyan, 'Path'.cyan],
+          colWidths: [20, 12, 60]
+        });
+
+        var type, path;
+        var count = 0;
+
+        for (var func in body) {
+
+          type = body[func].type;
+          path = body[func].path;
+
+          table.push([
+            func,
+            type,
+            path
+          ]);
+
+          count++;
+        }
+
+        if (count === 0) {
+          table.push([{
+            colSpan: 3,
+            content: 'No functions deployed.  Run \'functions deploy\' to deploy a function to the emulator'
+              .gray
+          }]);
+        }
+        console.log(table.toString());
       });
   },
-  undeploy: function(fnName) {
-    delete functions[fnName];
+  describe: function(name) {
+    action('GET', 'http://localhost:' + DEFAULT_PORT + '/function/' + name,
+      function(err, body) {
+        if (err) {
+          console.error(err);
+          return;
+        }
+        printDescribe(body);
+      });
   },
-  list: function() {
-    for (var fn in functions) {
-      console.log(fn);
-    }
+  call: function(name, options) {
+    action('POST', 'http://localhost:' + DEFAULT_PORT + '/' + name,
+      function(err, body) {
+        if (err) {
+          console.error(err);
+          return;
+        }
+        console.log(body);
+      }, options.data);
   }
 };
 
-var action = function action(method, uri, callback) {
+module.exports = self;
+
+var printDescribe = function printDescribe(body) {
+  body = JSON.parse(body);
+
+  var table = new Table({
+    head: ['Property'.cyan, 'Value'.cyan],
+    colWidths: [10, 60]
+  });
+
+  table.push(['Name', body.name]);
+  table.push(['Type', body.type]);
+  table.push(['Path', body.path]);
+
+  if (body.url) {
+    table.push(['Url', body.url.green]);
+  }
+  console.log(table.toString());
+}
+
+var action = function action(method, uri, callback, data) {
   checkStatus(DEFAULT_PORT, function(err) {
     if (err) {
       callback(
@@ -71,13 +179,20 @@ var action = function action(method, uri, callback) {
       );
       return;
     }
-    request({
-        method: method,
-        uri: uri
-      },
+
+    var options = {
+      method: method,
+      url: uri
+    };
+
+    if (method === 'POST' && data) {
+      options.json = JSON.parse(data);
+    }
+
+    request(options,
       function(error, response, body) {
-        if (!error && response.statusCode == 200) {
-          callback()
+        if (!error && response.statusCode === 200) {
+          callback(null, body)
         } else {
           callback(body);
         }
@@ -116,14 +231,14 @@ var startEmulator = function startEmulator(port, callback) {
           }
           return;
         }
-
-        console.log('Emulator started');
+        process.stdout.write("Emulator ");
+        process.stdout.write('STARTED\n'.green);
         if (callback) {
           callback();
         }
       });
     } else {
-      console.log('Emulator already running');
+      console.log('Emulator already running'.cyan);
     }
   });
 }
@@ -139,7 +254,8 @@ var stopEmulator = function stopEmulator(port, callback) {
           return;
         }
 
-        console.log('Emulator stopped');
+        process.stdout.write("Emulator ");
+        process.stdout.write('STOPPED\n'.red);
         if (callback) {
           callback();
         }

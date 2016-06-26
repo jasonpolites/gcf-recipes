@@ -16,11 +16,16 @@ var self = {
       res.send('Hello ' + req.body + '!');
     }
   },
+
   index: function(req, res) {
     var fileSystem = require('fs');
     var readStream = fileSystem.createReadStream('./index.html');
     readStream.pipe(res);
   },
+
+  helloWorld: function(req, res) {
+    res.send('Hello World!')
+  }
 }
 
 module.exports = self;

@@ -33,20 +33,9 @@ Usage:
 
 Examples:
 
-Start the emulator
-
-    functions start
-
-Stop the emulator
-
-    functions stop
-
-Restart the emulator
-
-    functions restart    
-
 Deploy a function
 
+    functions start
     functions deploy ../myFunction helloWorld
 
 Invoke a function
@@ -56,11 +45,3 @@ Invoke a function
 If it's an HTTP function
 
     curl http://localhost:8080/helloWorld
-
-List deployed functions
-
-    functions list
-
-Undeploy a function
-
-    functions undeploy helloWorld

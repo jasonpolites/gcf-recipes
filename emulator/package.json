@@ -1,10 +1,11 @@
 {
   "name": "cloud-functions-emulator",
   "version": "1.0.0",
+  "private": true,
   "description": "Cloud Functions Emulator",
   "main": "index.js",
   "author": "Jason Polites",
-  "license": "MIT",
+  "license": "Apache Version 2.0",
   "dependencies": {
     "body-parser": "^1.15.2",
     "cli-table2": "^0.2.0",
@@ -15,6 +16,10 @@
     "request": "^2.72.0",
     "response-time": "^2.3.1",
     "winston": "^2.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jasonpolites/gcf-recipes.git"
   },
   "bin": {
     "functions": "./index.js"

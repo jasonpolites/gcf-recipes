@@ -50,6 +50,20 @@ var self = {
       }, 1000);
     });
 
+
+    // Setup the winston logger.  We're going to write to a file which will 
+    // automatically roll when it exceeds ~1MB. 
+    self._log = new winston.Logger({
+      transports: [
+        new winston.transports.File({
+          json: false,
+          filename: path.resolve(__dirname + '/logs', 'emulator.log'),
+          maxsize: 1048576
+        })
+      ],
+      exitOnError: false
+    });
+
     // Override default console log calls to redirect them to winston.
     // This is required because when the server is run as a spawned process 
     // from the CLI, stdout and stderr will be written to /dev/null.  In order 
@@ -70,19 +84,6 @@ var self = {
     console.debug = function() {
       self._log.debug.apply(self._log, formatArgs(arguments));
     };
-
-    // Setup the winston logger.  We're going to write to a file which will 
-    // automatically roll when it exceeds ~1MB. 
-    self._log = new winston.Logger({
-      transports: [
-        new winston.transports.File({
-          json: false,
-          filename: path.resolve(__dirname + '/' + logs, 'emulator.log'),
-          maxsize: 1048576
-        })
-      ],
-      exitOnError: false
-    });
 
     // The port on which to listen for requests will be send by the CLI, or 
     // will default to 8080 in the absence of an argument.

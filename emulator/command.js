@@ -235,7 +235,7 @@ var startEmulator = function startEmulator(port, callback) {
     if (err) {
       console.log('Starting Cloud Functions Emulator on port ' + port + '...');
 
-      var child = spawn('node', ['emulator.js', port], {
+      var child = spawn('node', [__dirname + '/emulator.js', port], {
         detached: true,
         stdio: 'inherit'
       });

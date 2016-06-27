@@ -67,6 +67,6 @@ program
 
 program.parse(process.argv);
 
-if (program.args.length < 1 || !program._execs[program.args[0]]) {
+if (program.args.length < 1) {
   program.help()
 }

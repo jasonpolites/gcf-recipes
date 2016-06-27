@@ -17,22 +17,22 @@ Usage:
 
     functions [options] [command]
 
-    Commands:
+        Commands:
 
-    start                                 Starts the emulator
-    stop                                  Stops the emulator
-    restart                               Restarts the emulator
-    clear                                 Resets the emulator to its default state and clears any deploy functions
-    status                                Returns the status of the emulator
-    deploy [options] <module> <function>  Deploys a function with the given module path and entry point
-    undeploy <function>                   Removes a previously deployed function
-    list                                  Lists deployed functions
-    describe <function>                   Describes the details of a single deployed function
-    call [options] <function>             Invokes a function
+        start                                 Starts the emulator
+        stop                                  Stops the emulator
+        restart                               Restarts the emulator
+        clear                                 Resets the emulator to its default state and clears any deploy functions
+        status                                Returns the status of the emulator
+        deploy [options] <module> <function>  Deploys a function with the given module path and entry point
+        undeploy <function>                   Removes a previously deployed function
+        list                                  Lists deployed functions
+        describe <function>                   Describes the details of a single deployed function
+        call [options] <function>             Invokes a function
 
-    Options:
+        Options:
 
-    -h, --help     output usage information
+        -h, --help     output usage information
 
 Deployment:
 
@@ -40,9 +40,9 @@ Deploying a function takes an optional `--type` argument
 
     deploy [options] <module> <function>
 
-      Deploys a function with the given module path and entry point
+        Deploys a function with the given module path and entry point
 
-      Options:
+        Options:
 
         --type <type>  The type of the function.  One of HTTP (H) or BACKGROUND (B).  Default is BACKGROUND
     

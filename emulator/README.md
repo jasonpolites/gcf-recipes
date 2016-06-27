@@ -64,8 +64,11 @@ If it's an HTTP function
 
 **Config:**
 
-A local configuration file is provided that allows you to configure:
+A local configuration (**config.js**) file is provided that allows you to configure:
 
-| port          | integer       | The TCP port on which the emulator will listen (default: 8080)        |
-| debug         | true/false    | True if you want to see logs from the emulator itself (default: false)|
-| projectId     | string        | Your GCP project ID (default:none)                                    | 
+| Property | Type | Description |
+|-------|---|----------|
+| port | integer | The TCP port on which the emulator will listen (default: 8080) | 
+| debug | boolean | True if you want to see logs from the emulator itself (default: false) |
+| projectId | string | Your GCP project ID (default:none) |
+

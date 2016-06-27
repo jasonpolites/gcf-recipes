@@ -3,10 +3,6 @@
 var program = require('commander');
 var commander = require('./command.js');
 
-var boo = function() {
-  console.log('boo!')
-};
-
 program
   .version('0.0.1')
 

@@ -1,4 +1,5 @@
 var DEFAULT_PORT = '8080';
+var DEFAULT_TIMEOUT = 3000;
 
 var functions = {};
 
@@ -46,13 +47,14 @@ var self = {
           return;
         }
 
-        process.stdout.write("Emulator ");
+        process.stdout.write("Cloud Functions Emulator ");
         process.stdout.write('CLEARED\n'.green);
+        self.list();
       });
   },
   status: function() {
     checkStatus(DEFAULT_PORT, function(err) {
-      process.stdout.write("Emulator is ");
+      process.stdout.write("Cloud Functions is ");
       if (err) {
         process.stdout.write("STOPPED\n".red);
         return;
@@ -85,6 +87,7 @@ var self = {
           return;
         }
         console.log('Function ' + fnName + ' removed'.green);
+        self.list();
       });
   },
   list: function() {
@@ -122,7 +125,7 @@ var self = {
         if (count === 0) {
           table.push([{
             colSpan: 3,
-            content: 'No functions deployed.  Run \'functions deploy\' to deploy a function to the emulator'
+            content: 'No functions deployed ¯\\_(ツ)_/¯.  Run \'functions deploy\' to deploy a function'
               .gray
           }]);
         }
@@ -141,7 +144,11 @@ var self = {
   },
   call: function(name, options) {
     action('POST', 'http://localhost:' + DEFAULT_PORT + '/' + name,
-      function(err, body) {
+      function(err, body, response) {
+
+        process.stdout.write("Function completed in:  ");
+        process.stdout.write((response.headers['x-response-time'] + '\n').green);
+
         if (err) {
           console.error(err);
           return;
@@ -152,7 +159,7 @@ var self = {
         checkStatus(DEFAULT_PORT, function(err) {
           if (err) {
             console.error(
-              'Emulator exited unexpectedly.  Check the emulator.log for more details'
+              'Cloud Functions Emulator exited unexpectedly.  Check the emulator.log for more details'
               .red);
             return;
           }
@@ -186,7 +193,8 @@ var action = function action(method, uri, callback, data) {
   checkStatus(DEFAULT_PORT, function(err) {
     if (err) {
       callback(
-        'Emulator is not running.  Use \'functions start\' to start the emulator'
+        'Cloud Functions Emulator is not running.  Use \'functions start\' to start the emulator'
+        .cyan
       );
       return;
     }
@@ -203,9 +211,9 @@ var action = function action(method, uri, callback, data) {
     request(options,
       function(error, response, body) {
         if (!error && response.statusCode === 200) {
-          callback(null, body)
+          callback(null, body, response)
         } else {
-          callback(body);
+          callback(body, null, response);
         }
       });
   });
@@ -214,7 +222,7 @@ var action = function action(method, uri, callback, data) {
 var doIfRunning = function doIfRunning(fn) {
   checkStatus(DEFAULT_PORT, function(err) {
     if (err) {
-      console.log('Emulator is not running');
+      console.log('Cloud Functions Emulator is not running ¯\\_(ツ)_/¯'.cyan);
       return;
     }
     fn();
@@ -225,16 +233,16 @@ var startEmulator = function startEmulator(port, callback) {
 
   checkStatus(DEFAULT_PORT, function(err) {
     if (err) {
-      console.log('Starting Emulator on port ' + port + '...');
+      console.log('Starting Cloud Functions Emulator on port ' + port + '...');
 
       var child = spawn('node', ['emulator.js', port], {
         detached: true,
-        stdio: 'ignore'
+        stdio: 'inherit'
       });
 
       child.unref();
 
-      waitForStart(port, 5000, function(err) {
+      waitForStart(port, DEFAULT_TIMEOUT, function(err) {
         if (err) {
           console.error(err);
           if (callback) {
@@ -242,14 +250,14 @@ var startEmulator = function startEmulator(port, callback) {
           }
           return;
         }
-        process.stdout.write("Emulator ");
+        process.stdout.write("Cloud Functions Emulator ");
         process.stdout.write('STARTED\n'.green);
         if (callback) {
           callback();
         }
       });
     } else {
-      console.log('Emulator already running'.cyan);
+      console.log('Cloud Functions Emulator already running'.cyan);
     }
   });
 }
@@ -258,14 +266,14 @@ var stopEmulator = function stopEmulator(port, callback) {
   request.del('http://localhost:' + port, function(error, response, body) {
     if (!error && response.statusCode == 200) {
 
-      waitForStop(port, 5000, function(err) {
+      waitForStop(port, DEFAULT_TIMEOUT, function(err) {
         if (err) {
-          console.error('Timeout waiting for server to stop');
+          console.error(err);
           callback(err);
           return;
         }
 
-        process.stdout.write("Emulator ");
+        process.stdout.write("Cloud Functions Emulator ");
         process.stdout.write('STOPPED\n'.red);
         if (callback) {
           callback();
@@ -294,7 +302,7 @@ var waitForStop = function waitForStart(port, timeout, callback, i) {
     i--;
 
     if (i <= 0) {
-      callback('Timeout waiting for server start');
+      callback('Error: Timeout waiting for emulator stop'.red);
       return;
     }
 
@@ -318,7 +326,7 @@ var waitForStart = function waitForStart(port, timeout, callback, i) {
     i--;
 
     if (i <= 0) {
-      callback('Timeout waiting for server start');
+      callback('Error: Timeout waiting for emulator start'.red);
       return;
     }
 

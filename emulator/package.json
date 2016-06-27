@@ -1,13 +1,10 @@
 {
-  "name": "gcf-emulator",
+  "name": "cloud-functions-emulator",
   "version": "1.0.0",
-  "description": "Cloud Functions Local Emulator",
+  "description": "Cloud Functions Emulator",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
+  "author": "Jason Polites",
+  "license": "MIT",
   "dependencies": {
     "body-parser": "^1.15.2",
     "cli-table2": "^0.2.0",
@@ -15,7 +12,8 @@
     "commander": "^2.9.0",
     "express": "^4.14.0",
     "jsonfile": "^2.3.1",
-    "simple-node-logger": "^0.93.12",
+    "request": "^2.72.0",
+    "response-time": "^2.3.1",
     "winston": "^2.2.0"
   },
   "bin": {

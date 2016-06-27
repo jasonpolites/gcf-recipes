@@ -19,7 +19,7 @@ This is a simple emulator that allows you to test your Cloud Functions on your l
 
         Commands:
 
-        start                                 Starts the emulator
+        start [options]                       Starts the emulator
         stop                                  Stops the emulator
         restart                               Restarts the emulator
         clear                                 Resets the emulator to its default state and clears any deploy functions
@@ -31,7 +31,6 @@ This is a simple emulator that allows you to test your Cloud Functions on your l
         call [options] <function>             Invokes a function
 
         Options:
-
         -h, --help     output usage information
 
 **Deployment:**

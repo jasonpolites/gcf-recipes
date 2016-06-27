@@ -9,6 +9,10 @@ Setup:
 
     npm install -g
 
+Help:
+
+    functions -h
+
 Usage: 
 
     functions [options] [command]
@@ -30,6 +34,18 @@ Usage:
 
     -h, --help     output usage information
 
+Deployment:
+
+Deploying a function takes an optional `--type` argument
+
+    deploy [options] <module> <function>
+
+      Deploys a function with the given module path and entry point
+
+      Options:
+
+        --type <type>  The type of the function.  One of HTTP (H) or BACKGROUND (B).  Default is BACKGROUND
+    
 
 Examples:
 

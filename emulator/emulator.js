@@ -19,18 +19,17 @@ const responseTime = require('response-time')
 const path = require('path');
 const jsonfile = require('jsonfile');
 const fs = require('fs');
-const winston = require('winston');
+const config = require('./config');
 
 var self = {
-
-  _log: null,
 
   _app: null,
   _server: null,
   _functions: null,
   _config: {
-    port: 8080,
-    functionsFile: null
+    port: null,
+    functionsFile: null,
+    projectId: null
   },
 
   _init: function() {
@@ -50,44 +49,26 @@ var self = {
       }, 1000);
     });
 
-
-    // Setup the winston logger.  We're going to write to a file which will 
-    // automatically roll when it exceeds ~1MB. 
-    self._log = new winston.Logger({
-      transports: [
-        new winston.transports.File({
-          json: false,
-          filename: path.resolve(__dirname + '/logs', 'emulator.log'),
-          maxsize: 1048576
-        })
-      ],
-      exitOnError: false
-    });
-
-    // Override default console log calls to redirect them to winston.
-    // This is required because when the server is run as a spawned process 
-    // from the CLI, stdout and stderr will be written to /dev/null.  In order 
-    // to capture logs emitted from user functions we need to globally redirect
-    // console logs for this process.  Note that this will also redirect logs
-    // from the emulator itself, so all emulator logs should be written at the 
-    // DEBUG level.  We've made an exception for error logs in the emulator, just
-    // to make it easier for developers to recognize failures in the emulator.
-    function formatArgs(args) {
-      return [util.format.apply(util.format, Array.prototype.slice.call(args))];
-    }
-    console.log = function() {
-      self._log.info.apply(self._log, formatArgs(arguments));
-    };
-    console.error = function() {
-      self._log.error.apply(self._log, formatArgs(arguments));
-    };
+    // Custom log method to allow us to emit debug logs from this process without 
+    // interfering with user code logs
     console.debug = function() {
-      self._log.debug.apply(self._log, formatArgs(arguments));
-    };
+      if (config.debug === true) {
+        console.log.apply(console.log, arguments);
+      }
+    }
 
     // The port on which to listen for requests will be send by the CLI, or 
     // will default to 8080 in the absence of an argument.
-    self._config.port = process.argv[2] || 8080;
+    self._config.port = parseInt(process.argv[2] || '8080');
+
+    // Set the project ID to be used
+    self._config.projectId = process.argv[3] || '';
+    process.env['GCLOUD_PROJECT'] = self._config.projectId;
+    process.env['GCP_PROJECT'] = self._config.projectId;
+
+    if (self._config.projectId) {
+      console.debug('Set project ID to ' + self._config.projectId);
+    }
 
     // The functions file is a registry of deployed functions.  We want 
     // function deployments to survive emulator restarts.
@@ -134,7 +115,11 @@ var self = {
     // function with that name if we assume that all function names in the 
     // emulator are *actual* function names from the module
     self._app.get('/', function(req, res) {
-      res.send('Cloud Functions Emulator RUNNING');
+      if (req.query.project) {
+        res.send(self._config.projectId);
+      } else {
+        res.send('Cloud Functions Emulator RUNNING');
+      }
     });
 
     // Use a DELETE to signal the shutdown of the emulator.  The process will 
@@ -166,7 +151,8 @@ var self = {
       var mod = require(p);
 
       if (!mod[name]) {
-        res.status(404).send('No function found in module ' + req.query.path +
+        res.status(404).send('No function found in module ' + req.query
+          .path +
           ' with name ' + name);
         return;
       }
@@ -310,6 +296,11 @@ var self = {
           // unexpected behavior in concurrent function invocation scenarios      
           process.chdir(record.path);
 
+          // Set the environment variables for this execution
+          // As per the comment above, this is sub-optimal but probably an 
+          // acceptable trade-off for an emulator
+          process.env['FUNCTION_NAME'] = fn;
+
           if (type === 'HTTP') {
 
             // Record the time to report the execution time
@@ -348,7 +339,6 @@ var self = {
         res.status(404).send('No function with name ' + fn);
       }
     });
-
   },
 
   _errorHandler: function(err, req, res, next) {

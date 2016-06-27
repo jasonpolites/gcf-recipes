@@ -5,15 +5,15 @@
 
 This is a simple emulator that allows you to test your Cloud Functions on your local machine
 
-Setup:
+**Setup:**
 
     npm install -g
 
-Help:
+**Help:**
 
     functions -h
 
-Usage: 
+**Usage:**
 
     functions [options] [command]
 
@@ -34,7 +34,7 @@ Usage:
 
         -h, --help     output usage information
 
-Deployment:
+**Deployment:**
 
 Deploying a function takes an optional `--type` argument
 
@@ -47,7 +47,7 @@ Deploying a function takes an optional `--type` argument
         --type <type>  The type of the function.  One of HTTP (H) or BACKGROUND (B).  Default is BACKGROUND
     
 
-Examples:
+**Examples:**
 
 Deploy a function
 
@@ -61,3 +61,11 @@ Invoke a function
 If it's an HTTP function
 
     curl http://localhost:8080/helloWorld
+
+**Config:**
+
+A local configuration file is provided that allows you to configure:
+
+| port          | integer       | The TCP port on which the emulator will listen (default: 8080)        |
+| debug         | true/false    | True if you want to see logs from the emulator itself (default: false)|
+| projectId     | string        | Your GCP project ID (default:none)                                    | 

@@ -1,5 +1,5 @@
-var DEFAULT_PORT = '8080';
 var DEFAULT_TIMEOUT = 3000;
+var CLI_CONF
 
 var functions = {};
 
@@ -8,38 +8,52 @@ var colors = require('colors');
 var net = require('net');
 var spawn = require('child_process').spawn;
 var Table = require('cli-table2');
+var config = require('./config.js');
 
 var self = {
-  start: function() {
-    startEmulator(DEFAULT_PORT, function(err) {
-      if (!err) {
-        self.list();
-      }
-    });
+
+  start: function(options) {
+    var projectId = '';
+    if (options && options.projectId) {
+      projectId = options.projectId;
+    } else {
+      projectId = config.projectId;
+    }
+
+    startEmulator(config.port, projectId,
+      function(err) {
+        if (!err) {
+          self.list();
+        }
+      });
   },
   stop: function() {
     doIfRunning(function() {
-      stopEmulator(DEFAULT_PORT);
+      stopEmulator(config.port);
     });
   },
   restart: function() {
-    checkStatus(DEFAULT_PORT, function(err) {
-      if (err) {
-        self.start()
-      } else {
-        stopEmulator(DEFAULT_PORT, function(err) {
+    doIfRunning(function() {
+      getCurrentProjectId(config.port, function(err, projectId) {
+        if (err) {
+          console.error(err);
+          return;
+        }
+        stopEmulator(config.port, function(err) {
           if (err) {
             console.error(err);
             return;
           }
-          self.start();
+          self.start({
+            projectId: projectId
+          });
         });
-      }
+      });
     });
   },
   clear: function() {
     // Remove the deployed functions
-    action('DELETE', 'http://localhost:' + DEFAULT_PORT + '/function/',
+    action('DELETE', 'http://localhost:' + config.port + '/function/',
       function(err) {
         if (err) {
           console.error(err);
@@ -53,18 +67,20 @@ var self = {
       });
   },
   status: function() {
-    checkStatus(DEFAULT_PORT, function(err) {
+    checkStatus(config.port, function(err) {
       process.stdout.write("Cloud Functions is ");
       if (err) {
         process.stdout.write("STOPPED\n".red);
         return;
       }
-      process.stdout.write("RUNNING\n".green);
+      process.stdout.write("RUNNING".green);
+      process.stdout.write(" on port " + config.port + "\n");
     });
   },
   deploy: function(modulePath, entryPoint, options) {
     // console.log(options.type);
-    action('POST', 'http://localhost:' + DEFAULT_PORT + '/function/' + entryPoint +
+    action('POST', 'http://localhost:' + config.port + '/function/' +
+      entryPoint +
       '?path=' + modulePath +
       '&type=' + options.type,
       function(err, body) {
@@ -78,7 +94,7 @@ var self = {
       });
   },
   undeploy: function(fnName) {
-    action('DELETE', 'http://localhost:' + DEFAULT_PORT + '/function/' +
+    action('DELETE', 'http://localhost:' + config.port + '/function/' +
       fnName,
       function(err) {
         if (err) {
@@ -91,7 +107,7 @@ var self = {
       });
   },
   list: function() {
-    action('GET', 'http://localhost:' + DEFAULT_PORT + '/function',
+    action('GET', 'http://localhost:' + config.port + '/function',
       function(err, body) {
         if (err) {
           console.error(err);
@@ -133,7 +149,7 @@ var self = {
       });
   },
   describe: function(name) {
-    action('GET', 'http://localhost:' + DEFAULT_PORT + '/function/' + name,
+    action('GET', 'http://localhost:' + config.port + '/function/' + name,
       function(err, body) {
         if (err) {
           console.error(err);
@@ -143,11 +159,12 @@ var self = {
       });
   },
   call: function(name, options) {
-    action('POST', 'http://localhost:' + DEFAULT_PORT + '/' + name,
+    action('POST', 'http://localhost:' + config.port + '/' + name,
       function(err, body, response) {
 
         process.stdout.write("Function completed in:  ");
-        process.stdout.write((response.headers['x-response-time'] + '\n').green);
+        process.stdout.write((response.headers['x-response-time'] + '\n')
+          .green);
 
         if (err) {
           console.error(err);
@@ -156,7 +173,7 @@ var self = {
 
         console.log(body);
 
-        checkStatus(DEFAULT_PORT, function(err) {
+        checkStatus(config.port, function(err) {
           if (err) {
             console.error(
               'Cloud Functions Emulator exited unexpectedly.  Check the emulator.log for more details'
@@ -189,8 +206,19 @@ var printDescribe = function printDescribe(body) {
   console.log(table.toString());
 }
 
+var getCurrentProjectId = function getCurrentProjectId(port, callback) {
+  request.get('http://localhost:' + port + '/?project=true', function(error,
+    response, body) {
+    if (error) {
+      callback(error);
+      return;
+    }
+    callback(null, response.body);
+  });
+}
+
 var action = function action(method, uri, callback, data) {
-  checkStatus(DEFAULT_PORT, function(err) {
+  checkStatus(config.port, function(err) {
     if (err) {
       callback(
         'Cloud Functions Emulator is not running.  Use \'functions start\' to start the emulator'
@@ -220,7 +248,7 @@ var action = function action(method, uri, callback, data) {
 }
 
 var doIfRunning = function doIfRunning(fn) {
-  checkStatus(DEFAULT_PORT, function(err) {
+  checkStatus(config.port, function(err) {
     if (err) {
       console.log('Cloud Functions Emulator is not running ¯\\_(ツ)_/¯'.cyan);
       return;
@@ -229,14 +257,17 @@ var doIfRunning = function doIfRunning(fn) {
   });
 }
 
-var startEmulator = function startEmulator(port, callback) {
+var startEmulator = function startEmulator(port, projectId, callback) {
 
-  checkStatus(DEFAULT_PORT, function(err) {
+  checkStatus(config.port, function(err) {
     if (err) {
-      console.log('Starting Cloud Functions Emulator on port ' + port + '...');
+      console.log('Starting Cloud Functions Emulator on port ' + port +
+        '...');
 
-      var child = spawn('node', [__dirname + '/emulator.js', port], {
-        detached: true,
+      var child = spawn('node', [__dirname + '/emulator.js', port,
+        projectId
+      ], {
+        detached: false,
         stdio: 'inherit'
       });
 

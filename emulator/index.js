@@ -9,7 +9,10 @@ program
 program
   .command('start')
   .description('Starts the emulator')
-  .action(commander.start);
+  .action(commander.start)
+  .option('--project-id <id>',
+    'Your Google Cloud Platform project ID. If not provided, the process.env.GCLOUD_PROJECT environment variable will not be set'
+  );
 
 program
   .command('stop')
@@ -23,7 +26,8 @@ program
 
 program
   .command('clear')
-  .description('Resets the emulator to its default state and clears any deploy functions')
+  .description(
+    'Resets the emulator to its default state and clears any deploy functions')
   .action(commander.clear);
 
 program

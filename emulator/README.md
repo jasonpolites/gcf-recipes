@@ -70,4 +70,5 @@ A local configuration (**config.js**) file is provided that allows you to config
 | port | integer | The TCP port on which the emulator will listen (default: 8080) | 
 | debug | boolean | True if you want to see logs from the emulator itself (default: false) |
 | projectId | string | Your GCP project ID (default:none) |
+| timeout | integer | Timeout (ms) to wait for the emulator to start (default:3000) |
 

@@ -22,7 +22,19 @@ var config = require('./config.js');
 
 var self = {
 
-  start: function(options) {
+  writer: {
+    log: function() {
+      console.log.apply(console, arguments);
+    },
+    error: function() {
+      console.error.apply(console, arguments);
+    },
+    write: function() {
+      console._stdout.write.apply(console._stdout, arguments);
+    }
+  },
+
+  start: function(options, callback) {
     var projectId;
     if (options && options.projectId) {
       projectId = options.projectId;
@@ -33,94 +45,128 @@ var self = {
     startEmulator(config.port, projectId,
       function(err) {
         if (!err) {
-          self.list();
+          self.list(options, callback);
+        } else {
+          if (callback) {
+            callback(err);
+          }
         }
       });
   },
-  stop: function() {
+
+  stop: function(options, callback) {
     doIfRunning(function() {
-      stopEmulator(config.port);
-    });
+      stopEmulator(config.port, callback);
+    }, callback);
   },
-  restart: function() {
+
+  restart: function(options, callback) {
     doIfRunning(function() {
       getCurrentProjectId(config.port, function(err, projectId) {
         if (err) {
-          console.error(err);
+          self.writer.error(err);
           return;
         }
         stopEmulator(config.port, function(err) {
           if (err) {
-            console.error(err);
+            self.writer.error(err);
             return;
           }
           self.start({
             projectId: projectId
-          });
+          }, callback);
         });
       });
-    });
+    }, callback);
   },
-  clear: function() {
+
+  clear: function(options, callback) {
     // Remove the deployed functions
     action('DELETE', 'http://localhost:' + config.port + '/function/',
       function(err) {
         if (err) {
-          console.error(err);
-          console.error('Clear command aborted'.red);
+          self.writer.error(err);
+          self.writer.error('Clear command aborted'.red);
+
+          if (callback) {
+            callback(err);
+          }
           return;
         }
 
-        process.stdout.write("Cloud Functions Emulator ");
-        process.stdout.write('CLEARED\n'.green);
-        self.list();
+        self.writer.write("Cloud Functions Emulator ");
+        self.writer.write('CLEARED\n'.green);
+        self.list(options, callback);
       });
   },
-  status: function() {
+
+  status: function(options, callback) {
     checkStatus(config.port, function(err) {
-      process.stdout.write("Cloud Functions is ");
+      self.writer.write("Cloud Functions is ");
       if (err) {
-        process.stdout.write("STOPPED\n".red);
+        self.writer.write("STOPPED\n".red);
+        if (callback) {
+          callback(err);
+        }
         return;
       }
-      process.stdout.write("RUNNING".green);
-      process.stdout.write(" on port " + config.port + "\n");
+
+      self.writer.write("RUNNING".green);
+      self.writer.write(" on port " + config.port + "\n");
+
+      if (callback) {
+        callback();
+      }
     });
   },
-  deploy: function(modulePath, entryPoint, options) {
-    // console.log(options.type);
+  deploy: function(modulePath, entryPoint, options, callback) {
+    // self.writer.log(options.type);
     action('POST', 'http://localhost:' + config.port + '/function/' +
       entryPoint +
       '?path=' + modulePath +
-      '&type=' + options.type,
+      '&type=' + (options.type || 'B'),
       function(err, body) {
         if (err) {
-          console.error(err);
-          console.error('Deployment aborted'.red);
+          self.writer.error(err);
+          self.writer.error('Deployment aborted'.red);
+
+          if (callback) {
+            callback(err);
+          }
           return;
         }
-        console.log('Function ' + entryPoint + ' deployed'.green);
+        self.writer.log('Function ' + entryPoint + ' deployed'.green);
         printDescribe(body);
+        if (callback) {
+          callback(null, body);
+        }
       });
   },
-  undeploy: function(fnName) {
+  undeploy: function(fnName, options, callback) {
     action('DELETE', 'http://localhost:' + config.port + '/function/' +
       fnName,
       function(err) {
         if (err) {
-          console.error(err);
-          console.error('Undeploy aborted'.red);
+          self.writer.error(err);
+          self.writer.error('Undeploy aborted'.red);
+
+          if (callback) {
+            callback(err);
+          }
           return;
         }
-        console.log('Function ' + fnName + ' removed'.green);
-        self.list();
+        self.writer.log('Function ' + fnName + ' removed'.green);
+        self.list(options, callback);
       });
   },
-  list: function() {
+  list: function(options, callback) {
     action('GET', 'http://localhost:' + config.port + '/function',
       function(err, body) {
         if (err) {
-          console.error(err);
+          self.writer.error(err);
+          if (callback) {
+            callback(err);
+          }
           return;
         }
 
@@ -128,7 +174,7 @@ var self = {
 
         var table = new Table({
           head: ['Name'.cyan, 'Type'.cyan, 'Path'.cyan],
-          colWidths: [20, 12, 60]
+          colWidths: [15, 12, 52]
         });
 
         var type, path;
@@ -155,37 +201,59 @@ var self = {
               .gray
           }]);
         }
-        console.log(table.toString());
+
+        var output = table.toString();
+
+        self.writer.log(output);
+
+        if (callback) {
+          callback(null, body);
+        }
       });
   },
-  describe: function(name) {
+  describe: function(name, options, callback) {
     action('GET', 'http://localhost:' + config.port + '/function/' + name,
       function(err, body) {
         if (err) {
-          console.error(err);
+          self.writer.error(err);
+
+          if (callback) {
+            callback(err);
+          }
+
           return;
         }
         printDescribe(body);
+        if (callback) {
+          callback(null, body);
+        }
       });
   },
-  call: function(name, options) {
+  call: function(name, options, callback) {
     action('POST', 'http://localhost:' + config.port + '/' + name,
       function(err, body, response) {
 
-        process.stdout.write("Function completed in:  ");
-        process.stdout.write((response.headers['x-response-time'] + '\n')
+        self.writer.write("Function completed in:  ");
+        self.writer.write((response.headers['x-response-time'] + '\n')
           .green);
 
         if (err) {
-          console.error(err);
+          self.writer.error(err);
+          if (callback) {
+            callback(err);
+          }
           return;
         }
 
-        console.log(body);
+        self.writer.log(body);
+
+        if (callback) {
+          callback(null, body);
+        }
 
         checkStatus(config.port, function(err) {
           if (err) {
-            console.error(
+            self.writer.error(
               'Cloud Functions Emulator exited unexpectedly.  Check the emulator.log for more details'
               .red);
             return;
@@ -203,7 +271,7 @@ var printDescribe = function printDescribe(body) {
 
   var table = new Table({
     head: ['Property'.cyan, 'Value'.cyan],
-    colWidths: [10, 60]
+    colWidths: [10, 70]
   });
 
   table.push(['Name', body.name]);
@@ -213,7 +281,7 @@ var printDescribe = function printDescribe(body) {
   if (body.url) {
     table.push(['Url', body.url.green]);
   }
-  console.log(table.toString());
+  self.writer.log(table.toString());
 }
 
 var getCurrentProjectId = function getCurrentProjectId(port, callback) {
@@ -257,13 +325,16 @@ var action = function action(method, uri, callback, data) {
   });
 }
 
-var doIfRunning = function doIfRunning(fn) {
+var doIfRunning = function doIfRunning(running, notRunning) {
   checkStatus(config.port, function(err) {
     if (err) {
-      console.log('Cloud Functions Emulator is not running ¯\\_(ツ)_/¯'.cyan);
+      self.writer.log('Cloud Functions Emulator is not running ¯\\_(ツ)_/¯'.cyan);
+      if (notRunning) {
+        notRunning();
+      }
       return;
     }
-    fn();
+    running();
   });
 }
 
@@ -271,7 +342,7 @@ var startEmulator = function startEmulator(port, projectId, callback) {
 
   checkStatus(config.port, function(err) {
     if (err) {
-      console.log('Starting Cloud Functions Emulator on port ' + port +
+      self.writer.log('Starting Cloud Functions Emulator on port ' + port +
         '...');
 
       var child = spawn('node', [__dirname + '/emulator.js', port,
@@ -285,20 +356,20 @@ var startEmulator = function startEmulator(port, projectId, callback) {
 
       waitForStart(port, config.timeout, function(err) {
         if (err) {
-          console.error(err);
+          self.writer.error(err);
           if (callback) {
             callback(err);
           }
           return;
         }
-        process.stdout.write("Cloud Functions Emulator ");
-        process.stdout.write('STARTED\n'.green);
+        self.writer.write("Cloud Functions Emulator ");
+        self.writer.write('STARTED\n'.green);
         if (callback) {
           callback();
         }
       });
     } else {
-      console.log('Cloud Functions Emulator already running'.cyan);
+      self.writer.log('Cloud Functions Emulator already running'.cyan);
     }
   });
 }
@@ -309,19 +380,19 @@ var stopEmulator = function stopEmulator(port, callback) {
 
       waitForStop(port, config.timeout, function(err) {
         if (err) {
-          console.error(err);
+          self.writer.error(err);
           callback(err);
           return;
         }
 
-        process.stdout.write("Cloud Functions Emulator ");
-        process.stdout.write('STOPPED\n'.red);
+        self.writer.write("Cloud Functions Emulator ");
+        self.writer.write('STOPPED\n'.red);
         if (callback) {
           callback();
         }
       });
     } else {
-      console.error(error);
+      self.writer.error(error);
       if (callback) {
         callback(error);
       }

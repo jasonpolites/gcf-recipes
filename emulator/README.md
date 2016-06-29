@@ -41,32 +41,33 @@ To deploy an HTTP function, use the `--trigger-http` argument
 
     functions deploy <module> <function> --trigger-http
 
-### Examples
+### Executing a Cloud Function
 
 Start the Emulator
 
     functions start    
 
-Deploy a BACKGROUND function
+Deploy a BACKGROUND function  (the first argument is the path to your module, the second argument is the name of the function)
 
     functions deploy ../myFunction helloWorld
 
-Deploy an HTTP function
-
-    functions deploy ../myFunction helloHttp --trigger-http   
-
-Invoke a function
+Invoke the function
 
     functions call helloWorld
-
-If it's an HTTP function
-
-    curl http://localhost:8080/helloWorld
 
 Stop the Emulator
 
     functions stop     
 
+For HTTP functions, just use the `--trigger-http` argument
+
+Deploy an HTTP function
+
+    functions deploy ../myFunction helloHttp --trigger-http  
+
+Invoke the function (default port is 8008)
+
+    curl http://localhost:8008/helloWorld    
 
 ### Config
 

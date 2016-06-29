@@ -50,7 +50,7 @@ Start the Emulator
 Deploy a BACKGROUND function  
 *(the first argument is the path to your module, the second argument is the name of the function)*
 
-    functions deploy ../myFunction helloWorld
+    functions deploy ../myModule helloWorld
 
 Invoke the function
 
@@ -64,7 +64,7 @@ For HTTP functions, just use the `--trigger-http` argument
 
 Deploy an HTTP function
 
-    functions deploy ../myFunction helloHttp --trigger-http  
+    functions deploy ../myModule helloHttp --trigger-http  
 
 Invoke the function (default port is 8008)
 

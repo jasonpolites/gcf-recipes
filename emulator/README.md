@@ -47,7 +47,8 @@ Start the Emulator
 
     functions start    
 
-Deploy a BACKGROUND function  (the first argument is the path to your module, the second argument is the name of the function)
+Deploy a BACKGROUND function  
+(the first argument is the path to your module, the second argument is the name of the function)
 
     functions deploy ../myFunction helloWorld
 
@@ -67,7 +68,7 @@ Deploy an HTTP function
 
 Invoke the function (default port is 8008)
 
-    curl http://localhost:8008/helloWorld    
+    curl http://localhost:8008/helloHttp    
 
 ### Config
 

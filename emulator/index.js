@@ -12,7 +12,10 @@ program
   .action(commander.start)
   .option('--project-id <id>',
     'Your Google Cloud Platform project ID. If not provided, the process.env.GCLOUD_PROJECT environment variable will not be set'
-  );
+  )
+  .option('--debug',
+    'If true, start the emulator in debug mode'
+  );;
 
 program
   .command('stop')
@@ -41,11 +44,7 @@ program
     'Deploys a function with the given module path and entry point'
   )
   .action(commander.deploy)
-  .option('--type <type>',
-    'The type of the function.  One of HTTP (H) or BACKGROUND (B).  Default is BACKGROUND',
-    /^(http|backround|h|b)$/i,
-    'b'
-  );
+  .option('--trigger-http', 'Deploys this function as an HTTP function');
 
 program
   .command('undeploy <function>')

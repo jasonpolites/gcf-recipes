@@ -42,7 +42,7 @@ var self = {
       projectId = config.projectId;
     }
 
-    startEmulator(config.port, projectId,
+    startEmulator(config.port, options.debug, projectId,
       function(err) {
         if (!err) {
           self.list(options, callback);
@@ -120,11 +120,13 @@ var self = {
     });
   },
   deploy: function(modulePath, entryPoint, options, callback) {
-    // self.writer.log(options.type);
+
+    var type = (options.triggerHttp === true) ? 'H' : 'B';
+
     action('POST', 'http://localhost:' + config.port + '/function/' +
       entryPoint +
       '?path=' + modulePath +
-      '&type=' + (options.type || 'B'),
+      '&type=' + type,
       function(err, body) {
         if (err) {
           self.writer.error(err);
@@ -338,16 +340,20 @@ var doIfRunning = function doIfRunning(running, notRunning) {
   });
 }
 
-var startEmulator = function startEmulator(port, projectId, callback) {
+var startEmulator = function startEmulator(port, debug, projectId, callback) {
 
   checkStatus(config.port, function(err) {
     if (err) {
       self.writer.log('Starting Cloud Functions Emulator on port ' + port +
         '...');
 
-      var child = spawn('node', [__dirname + '/emulator.js', port,
-        projectId
-      ], {
+      var args = [__dirname + '/emulator.js', port, projectId];
+
+      if (debug === true) {
+        args.unshift('--debug');
+      }
+
+      var child = spawn('node', args, {
         detached: true,
         stdio: 'inherit'
       });

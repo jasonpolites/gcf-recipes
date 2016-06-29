@@ -20,6 +20,7 @@ const path = require('path');
 const jsonfile = require('jsonfile');
 const fs = require('fs');
 const config = require('./config');
+const invoker = require('./invoker');
 
 var self = {
 
@@ -268,77 +269,82 @@ var self = {
 
       console.debug('Executing ' + req.method + ' on function ' + fn);
 
-      var record = self._functions[fn];
+      var func = self._functions[fn];
 
-      if (record) {
-
-        // Ensure the module is not loaded from cache
-        // This has obvious negative performance implications, with the 
-        // benefit of allowing function code to be changed out of band
-        // without needing re-deployment
-        delete require.cache[require.resolve(record.path)];
-
-        // Require the target module to load the function for invocation
-        var mod = require(record.path);
-
-        var func = mod[fn];
-        var type = record.type;
-
-        var cwd = process.cwd();
-
-        try {
-
-          // Set the working directory to the target module path
-          // TODO:  This is sub-optimal, but the alternative is to 
-          // fork a new process with a separate HTTP server and pipe the req/res
-          // from the master process.  In the context of an 'emulator", this is 
-          // probably a reasonable trade-off.  It has the side effect of having 
-          // unexpected behavior in concurrent function invocation scenarios      
-          process.chdir(record.path);
-
-          // Set the environment variables for this execution
-          // As per the comment above, this is sub-optimal but probably an 
-          // acceptable trade-off for an emulator
-          process.env['FUNCTION_NAME'] = fn;
-
-          if (type === 'HTTP') {
-
-            // Record the time to report the execution time
-            var timeInMs = Date.now();
-
-            // Pass through HTTP
-            func.call(this, req, res);
-
-            // Change the working directory back to the original
-            process.chdir(cwd);
-          } else {
-            // BACKGROUND
-            var context = {
-              success: function(val) {
-                process.chdir(cwd);
-                res.status(200).json(val);
-              },
-              failure: function(val) {
-                process.chdir(cwd);
-                res.status(500).json(val);
-              },
-              done: function(val) {
-                if (val) {
-                  context.failure(val);
-                  return;
-                }
-                context.success();
-              }
-            };
-            func.call(this, context, req.body);
-          }
-        } catch (err) {
-          res.status(500).send(err.stack);
-        }
+      if (func) {
+        self._invoke(func, req, res);
       } else {
-        res.status(404).send('No function with name ' + fn);
+        res.status(404).send('No function with name ' + func.name);
       }
     });
+  },
+
+  _invoke: function(fn, req, res) {
+
+    // Ensure the module is not loaded from cache
+    // This has obvious negative performance implications, with the 
+    // benefit of allowing function code to be changed out of band
+    // without needing re-deployment
+    delete require.cache[require.resolve(fn.path)];
+
+    // Require the target module to load the function for invocation
+    var mod = require(fn.path);
+
+    var func = mod[fn.name];
+    var type = fn.type;
+
+    var cwd = process.cwd();
+
+    try {
+
+      // Set the working directory to the target module path
+      // TODO:  This is sub-optimal, but the alternative is to 
+      // fork a new process with a separate HTTP server and pipe the req/res
+      // from the master process.  In the context of an 'emulator", this is 
+      // probably a reasonable trade-off.  It has the side effect of having 
+      // unexpected behavior in concurrent function invocation scenarios      
+      process.chdir(fn.path);
+
+      // Set the environment variables for this execution
+      // As per the comment above, this is sub-optimal but probably an 
+      // acceptable trade-off for an emulator
+      process.env['FUNCTION_NAME'] = fn.name;
+
+      if (type === 'HTTP') {
+
+        // Record the time to report the execution time
+        var timeInMs = Date.now();
+
+        // Pass through HTTP
+        invoker.invoke(func, mod, req, res);
+
+        // Change the working directory back to the original
+        process.chdir(cwd);
+      } else {
+        // BACKGROUND
+        var context = {
+          success: function(val) {
+            process.chdir(cwd);
+            res.status(200).json(val);
+          },
+          failure: function(val) {
+            process.chdir(cwd);
+            res.status(500).json(val);
+          },
+          done: function(val) {
+            if (val) {
+              context.failure(val);
+              return;
+            }
+            context.success();
+          }
+        };
+
+        invoker.invoke(func, mod, context, req.body);
+      }
+    } catch (err) {
+      res.status(500).send(err.stack);
+    }
   },
 
   _errorHandler: function(err, req, res, next) {

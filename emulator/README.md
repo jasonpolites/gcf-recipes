@@ -108,7 +108,7 @@ Now start the node inspector process (we recommend doing this in a separate cons
 
 This will start an HTTP server on port 8080, you can then browse to this URL in Chrome
 
-    [http://127.0.0.1:8080/?port=5858](http://127.0.0.1:8080/?port=5858)
+    open http://127.0.0.1:8080/?port=5858
 
 Now when you invoke your function, you can debug!
 

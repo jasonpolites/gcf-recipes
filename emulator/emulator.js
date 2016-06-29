@@ -14,11 +14,13 @@
 
 const util = require('util')
 const express = require('express');
-const bodyParser = require('body-parser');;
-const responseTime = require('response-time')
+const bodyParser = require('body-parser');
+const responseTime = require('response-time');
+const timeout = require('connect-timeout');
 const path = require('path');
 const jsonfile = require('jsonfile');
 const fs = require('fs');
+
 const config = require('./config');
 const invoker = require('./invoker');
 
@@ -45,9 +47,9 @@ var self = {
       // to not complete.  This we're just going to wait for an arbitrary amount
       // of time for the log entry to complete.
       // Possible future solution here: https://github.com/winstonjs/winston/issues/228
-      setTimeout(function() {
-        process.exit(1);
-      }, 1000);
+      // setTimeout(function() {
+      //   process.exit(1);
+      // }, 1000);
     });
 
     // Custom log method to allow us to emit debug logs from this process without 
@@ -108,6 +110,8 @@ var self = {
 
     // responseTime will allow us to track the execution time of a function
     self._app.use(responseTime());
+
+    self._app.use(timeout(config.timeout));
 
     // Not really anything we need to do here, but responding to a browser GET
     // seems reasonable in case the developer wonders what's hogging their port

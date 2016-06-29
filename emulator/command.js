@@ -235,10 +235,6 @@ var self = {
     action('POST', 'http://localhost:' + config.port + '/' + name,
       function(err, body, response) {
 
-        self.writer.write("Function completed in:  ");
-        self.writer.write((response.headers['x-response-time'] + '\n')
-          .green);
-
         if (err) {
           self.writer.error(err);
           if (callback) {
@@ -246,6 +242,10 @@ var self = {
           }
           return;
         }
+
+        self.writer.write("Function completed in:  ");
+        self.writer.write((response.headers['x-response-time'] + '\n')
+          .green);
 
         self.writer.log(body);
 
@@ -286,15 +286,19 @@ var printDescribe = function printDescribe(body) {
   self.writer.log(table.toString());
 }
 
-var getCurrentProjectId = function getCurrentProjectId(port, callback) {
-  request.get('http://localhost:' + port + '/?project=true', function(error,
-    response, body) {
-    if (error) {
-      callback(error);
-      return;
-    }
-    callback(null, response.body);
-  });
+var getCurrentProjectId = function getCurrentProjectId(callback) {
+  action('GET', 'http://localhost:' + config.port + '/?project=true',
+    function(err, body) {
+      if (err) {
+        if (callback) {
+          callback(err);
+        }
+        return;
+      }
+      if (callback) {
+        callback(null, body);
+      }
+    });
 }
 
 var action = function action(method, uri, callback, data) {
@@ -316,14 +320,21 @@ var action = function action(method, uri, callback, data) {
       options.json = JSON.parse(data);
     }
 
-    request(options,
-      function(error, response, body) {
-        if (!error && response.statusCode === 200) {
-          callback(null, body, response)
-        } else {
-          callback(body, null, response);
-        }
-      });
+    try {
+      request(options,
+        function(error, response, body) {
+          if (!error && response.statusCode === 200) {
+            callback(null, body, response)
+          } else if (error) {
+            callback(error, null, response);
+          } else {
+            callback(new Error(response.statusCode), null, response);
+          }
+        });
+    } catch (e) {
+      console.error(e);
+      callback(new Error(e));
+    }
   });
 }
 

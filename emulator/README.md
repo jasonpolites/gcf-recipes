@@ -5,15 +5,15 @@
 
 This is a simple emulator that allows you to test your Cloud Functions on your local machine
 
-**Setup:**
+### Setup
 
     npm install -g
 
-**Help:**
+### Help
 
     functions -h
 
-**Usage:**
+### Usage
 
     functions [options] [command]
 
@@ -33,25 +33,27 @@ This is a simple emulator that allows you to test your Cloud Functions on your l
         Options:
         -h, --help     output usage information
 
-**Deployment:**
+### Deployment
 
-Deploying a function takes an optional `--type` argument
+The emulator can host both BACKGROUND and HTTP (foreground) Cloud Functions.  
+By default the emulator will consider functions deployed to be BACKGROUND functions. 
+To deploy an HTTP function, use the `--trigger-http` argument
 
-    deploy [options] <module> <function>
+    functions deploy <module> <function> --trigger-http
 
-        Deploys a function with the given module path and entry point
+### Examples
 
-        Options:
+Start the Emulator
 
-        --type <type>  The type of the function.  One of HTTP (H) or BACKGROUND (B).  Default is BACKGROUND
-    
+    functions start    
 
-**Examples:**
+Deploy a BACKGROUND function
 
-Deploy a function
-
-    functions start
     functions deploy ../myFunction helloWorld
+
+Deploy an HTTP function
+
+    functions deploy ../myFunction helloHttp --trigger-http   
 
 Invoke a function
 
@@ -61,14 +63,67 @@ If it's an HTTP function
 
     curl http://localhost:8080/helloWorld
 
-**Config:**
+Stop the Emulator
+
+    functions stop     
+
+
+### Config
 
 A local configuration (**config.js**) file is provided that allows you to configure:
 
 | Property | Type | Description |
 |-------|---|----------|
-| port | integer | The TCP port on which the emulator will listen (default: 8080) | 
+| port | integer | The TCP port on which the emulator will listen (default: 8008) | 
 | debug | boolean | True if you want to see logs from the emulator itself (default: false) |
 | projectId | string | Your GCP project ID (default:none) |
 | timeout | integer | Timeout (ms) to wait for the emulator to start (default:3000) |
+
+### Debugging
+
+To start the emulator in *debug* mode, simply use the `--debug` flag
+
+    functions start --debug
+
+While running in debug mode a separate debug server will be started on port 5858 
+(default debugger port for Node).  You can then attach to the debugger process 
+with your favorite IDE
+
+#### Debugging with Chrome Developer Tools
+
+If your IDE doesn't support connecting to a Node.js debugger process, you can 
+easily debug your Cloud Functions in the emulator using [node-inspector](https://github.com/node-inspector/node-inspector)
+
+First, install node-inspector
+
+    npm install -g node-inspector
+
+Start the emulator in debug mode
+
+    functions start --debug
+
+Now start the node inspector process (we recommend doing this in a separate console window)
+
+    node-inspector
+
+This will start an HTTP server on port 8080, you can then browse to this URL in Chrome
+
+    open http://127.0.0.1:8080/?port=5858
+
+Now when you invoke your function, you can debug!
+
+    functions call helloWorld
+
+#### Known Issues with Debugging
+
+ - If you see the following error in the console
+
+    'Assertion failed: ((err) == (0)), function Stop, file ../src/debug-agent.cc, line 155.`
+
+    You can safely ignore it.  It's an [open issue](https://github.com/nodejs/node/issues/781) in Node.js
+
+ - If you restart the emulator while the debug server is running you may need to refresh the browser for
+   the default debug breakpoint to fire.
+
+
 

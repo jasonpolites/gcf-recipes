@@ -114,6 +114,9 @@ Now when you invoke your function, you can debug!
 
     functions call helloWorld
 
+
+![Debugging with Chrome Developer Tools](img/debugging.png "Debugging with Chrome Developer Tools")    
+
 #### Known Issues with Debugging
 
  - If you see the following error in the console

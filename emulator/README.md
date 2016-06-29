@@ -48,7 +48,7 @@ Start the Emulator
     functions start    
 
 Deploy a BACKGROUND function  
-(the first argument is the path to your module, the second argument is the name of the function)
+*(the first argument is the path to your module, the second argument is the name of the function)*
 
     functions deploy ../myFunction helloWorld
 

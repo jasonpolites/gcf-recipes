@@ -20,12 +20,13 @@ const responseTime = require('response-time');
 const path = require('path');
 const jsonfile = require('jsonfile');
 const fs = require('fs');
-
+const winston = require('winston');
 const config = require('./config');
 const invoker = require('./invoker');
 
 var self = {
 
+  _log: null,
   _app: null,
   _server: null,
   _functions: null,
@@ -47,18 +48,71 @@ var self = {
       // to not complete.  This we're just going to wait for an arbitrary amount
       // of time for the log entry to complete.
       // Possible future solution here: https://github.com/winstonjs/winston/issues/228
-      // setTimeout(function() {
-      //   process.exit(1);
-      // }, 1000);
+      setTimeout(function() {
+        process.exit(1);
+      }, 1000);
     });
+
+    // Setup the winston logger.  We're going to write to a file which will 
+    // automatically roll when it exceeds ~1MB. 
+
+    // Ensure the logs directory exists
+    var logsDir = path.resolve(__dirname, 'logs');
+
+    try {
+      fs.statSync(logsDir);
+    } catch (e) {
+      if (e.code === 'ENOENT') {
+        fs.mkdir(logsDir);
+      } else {
+        throw e;
+      }
+    }
+
+    self._log = new winston.Logger({
+      transports: [
+        new winston.transports.File({
+          json: false,
+          filename: path.resolve(logsDir, 'emulator.log'),
+          maxsize: 1048576
+        })
+      ],
+      exitOnError: false
+    });
+
+    // Override default console log calls to redirect them to winston.
+    // This is required because when the server is run as a spawned process 
+    // from the CLI, stdout and stderr will be written to /dev/null.  In order 
+    // to capture logs emitted from user functions we need to globally redirect
+    // console logs for this process.  Note that this will also redirect logs
+    // from the emulator itself, so all emulator logs should be written at the 
+    // DEBUG level.  We've made an exception for error logs in the emulator, just
+    // to make it easier for developers to recognize failures in the emulator.
+    // function formatArgs(args) {
+    //   return [util.format.apply(util.format, Array.prototype.slice.call(
+    //     args))];
+    // }
+
+    console.log = function() {
+      self._log.info.apply(self._log, arguments);
+    };
+
+    console.info = console.log;
+
+    console.error = function() {
+      self._log.error.apply(self._log, arguments);
+    };
+    console.debug = function() {
+      self._log.debug.apply(self._log, arguments);
+    };
 
     // Custom log method to allow us to emit debug logs from this process without 
     // interfering with user code logs
-    console.debug = function() {
-      if (config.debug === true) {
-        console.log.apply(console.log, arguments);
-      }
-    }
+    // console.debug = function() {
+    //   if (config.debug === true) {
+    //     console.log.apply(console.log, arguments);
+    //   }
+    // }
 
     // The port on which to listen for requests will be send by the CLI, or 
     // will default to 8080 in the absence of an argument.
@@ -332,7 +386,10 @@ var self = {
             res.status(200).json(val);
           },
           failure: function(val) {
+            console.log('In context failure in emulator with ' + val);
+
             process.chdir(cwd);
+
             res.status(500).json(val);
           },
           done: function(val) {
@@ -347,7 +404,12 @@ var self = {
         invoker.invoke(func, mod, context, req.body);
       }
     } catch (err) {
-      res.status(500).send(err.stack);
+      console.log('In uncaught error');
+      res.status(500).send({
+        error: err.message
+      });
+
+      // res.status(500).send(err.stack);
     }
   },
 
@@ -358,7 +420,8 @@ var self = {
 
   main: function() {
     self._init();
-    console.debug('Starting emulator on port ' + self._config.port + '...');
+    console.debug('Starting emulator server on port ' + self._config.port +
+      '...');
     self._server = self._app.listen(self._config.port, function() {
       console.debug('Server started');
     });

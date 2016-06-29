@@ -34,7 +34,8 @@ var self = {
         res.send(val);
       },
       failure: function(val) {
-        res.status(500).send(val);
+        console.log('in failure callback with ' + val)
+        res.status(500).send(JSON.stringify(val));
       }
     }, req.body);
   },
@@ -62,6 +63,7 @@ var self = {
       }
 
       self._saveEntity(k, value, function(err) {
+        console.log('In saveEntity callback with err ' + err);
         if (err) {
           logger.error(err);
           context.failure(err);
@@ -176,6 +178,7 @@ var self = {
 
   // Saves (creates or inserts) an entity with the given key
   _saveEntity: function(dsKey, value, callback) {
+    console.log('In save entity');
     var ds = self._getDSClient();
     ds.save({
       key: dsKey,

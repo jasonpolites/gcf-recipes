@@ -234,7 +234,6 @@ var self = {
   call: function(name, options, callback) {
     action('POST', 'http://localhost:' + config.port + '/' + name,
       function(err, body, response) {
-
         if (err) {
           self.writer.error(err);
           if (callback) {
@@ -328,7 +327,8 @@ var action = function action(method, uri, callback, data) {
           } else if (error) {
             callback(error, null, response);
           } else {
-            callback(new Error(response.statusCode), null, response);
+            callback(new Error(JSON.stringify(response.body)), null,
+              response);
           }
         });
     } catch (e) {

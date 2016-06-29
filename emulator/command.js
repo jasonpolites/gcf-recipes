@@ -62,7 +62,7 @@ var self = {
 
   restart: function(options, callback) {
     doIfRunning(function() {
-      getCurrentProjectId(config.port, function(err, projectId) {
+      getCurrentProjectId(function(err, projectId) {
         if (err) {
           self.writer.error(err);
           return;

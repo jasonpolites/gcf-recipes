@@ -16,7 +16,7 @@ const util = require('util')
 const express = require('express');
 const bodyParser = require('body-parser');
 const responseTime = require('response-time');
-const timeout = require('connect-timeout');
+// const timeout = require('connect-timeout');
 const path = require('path');
 const jsonfile = require('jsonfile');
 const fs = require('fs');
@@ -111,7 +111,7 @@ var self = {
     // responseTime will allow us to track the execution time of a function
     self._app.use(responseTime());
 
-    self._app.use(timeout(config.timeout));
+    // self._app.use(timeout(config.timeout));
 
     // Not really anything we need to do here, but responding to a browser GET
     // seems reasonable in case the developer wonders what's hogging their port

@@ -188,9 +188,9 @@ var self = {
           path = body[func].path;
 
           table.push([
-            func,
-            type,
-            path
+            func.white,
+            type.white,
+            path.white
           ]);
 
           count++;
@@ -276,12 +276,12 @@ var printDescribe = function printDescribe(body) {
     colWidths: [10, 70]
   });
 
-  table.push(['Name', body.name]);
-  table.push(['Type', body.type]);
-  table.push(['Path', body.path]);
+  table.push(['Name', body.name.white]);
+  table.push(['Type', body.type.white]);
+  table.push(['Path', body.path.white]);
 
   if (body.url) {
-    table.push(['Url', body.url.green]);
+    table.push(['Url', body.url.white]);
   }
   self.writer.log(table.toString());
 }
@@ -330,7 +330,8 @@ var action = function action(method, uri, callback, data) {
 var doIfRunning = function doIfRunning(running, notRunning) {
   checkStatus(config.port, function(err) {
     if (err) {
-      self.writer.log('Cloud Functions Emulator is not running ¯\\_(ツ)_/¯'.cyan);
+      self.writer.log(
+        'Cloud Functions Emulator is not running ¯\\_(ツ)_/¯'.cyan);
       if (notRunning) {
         notRunning();
       }

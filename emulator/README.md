@@ -118,7 +118,7 @@ Now when you invoke your function, you can debug!
 
  - If you see the following error in the console
 
-    'Assertion failed: ((err) == (0)), function Stop, file ../src/debug-agent.cc, line 155.`
+    `Assertion failed: ((err) == (0)), function Stop, file ../src/debug-agent.cc, line 155.`
 
     You can safely ignore it.  It's an [open issue](https://github.com/nodejs/node/issues/781) in Node.js
 

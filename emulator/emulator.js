@@ -16,7 +16,6 @@ const util = require('util')
 const express = require('express');
 const bodyParser = require('body-parser');
 const responseTime = require('response-time');
-// const timeout = require('connect-timeout');
 const path = require('path');
 const jsonfile = require('jsonfile');
 const fs = require('fs');
@@ -30,11 +29,7 @@ var self = {
   _app: null,
   _server: null,
   _functions: null,
-  _config: {
-    port: null,
-    functionsFile: null,
-    projectId: null
-  },
+  _functionsFile: null,
 
   _init: function() {
 
@@ -106,44 +101,32 @@ var self = {
       self._log.debug.apply(self._log, arguments);
     };
 
-    // Custom log method to allow us to emit debug logs from this process without 
-    // interfering with user code logs
-    // console.debug = function() {
-    //   if (config.debug === true) {
-    //     console.log.apply(console.log, arguments);
-    //   }
-    // }
-
-    // The port on which to listen for requests will be send by the CLI, or 
-    // will default to 8080 in the absence of an argument.
-    self._config.port = parseInt(process.argv[2] || '8080');
-
     // Set the project ID to be used
-    self._config.projectId = process.argv[3] || '';
-    process.env['GCLOUD_PROJECT'] = self._config.projectId;
-    process.env['GCP_PROJECT'] = self._config.projectId;
+    config.projectId = process.argv[3] || config.projectId;
+    process.env['GCLOUD_PROJECT'] = config.projectId;
+    process.env['GCP_PROJECT'] = config.projectId;
 
-    if (self._config.projectId) {
-      console.debug('Set project ID to ' + self._config.projectId);
+    if (config.projectId) {
+      console.debug('Set project ID to ' + config.projectId);
     }
 
     // The functions file is a registry of deployed functions.  We want 
     // function deployments to survive emulator restarts.
-    self._config.functionsFile = path.resolve(__dirname, 'functions.json');
+    self._functionsFile = path.resolve(__dirname, 'functions.json');
 
     // Ensure the function registry file exists
     try {
-      fs.statSync(self._config.functionsFile);
+      fs.statSync(self._functionsFile);
     } catch (e) {
       if (e.code === 'ENOENT') {
-        jsonfile.writeFileSync(self._config.functionsFile, {});
+        jsonfile.writeFileSync(self._functionsFile, {});
       } else {
         throw e;
       }
     }
 
     // Create or read the current registry file
-    self._functions = jsonfile.readFileSync(self._config.functionsFile);
+    self._functions = jsonfile.readFileSync(self._functionsFile);
 
     // Create Express App
     self._setupApp();
@@ -175,7 +158,7 @@ var self = {
     // emulator are *actual* function names from the module
     self._app.get('/', function(req, res) {
       if (req.query.project) {
-        res.send(self._config.projectId);
+        res.send(config.projectId);
       } else {
         res.send('Cloud Functions Emulator RUNNING');
       }
@@ -226,7 +209,7 @@ var self = {
       }
 
       if (type === 'HTTP') {
-        url = 'http://localhost:' + self._config.port + '/' + name
+        url = 'http://localhost:' + config.port + '/' + name
       }
 
       try {
@@ -237,7 +220,7 @@ var self = {
           url: url
         };
 
-        jsonfile.writeFileSync(self._config.functionsFile, self._functions);
+        jsonfile.writeFileSync(self._functionsFile, self._functions);
 
         console.debug('Deployed function ' + name + ' at path ' + p);
 
@@ -257,7 +240,7 @@ var self = {
      */
     self._app.delete("/function", function(req, res) {
       self._functions = {};
-      jsonfile.writeFileSync(self._config.functionsFile, self._functions);
+      jsonfile.writeFileSync(self._functionsFile, self._functions);
       console.debug('Cleared all deployed functions');
       res.status(200).end();
     });
@@ -274,7 +257,7 @@ var self = {
     self._app.delete("/function/:name", function(req, res) {
       // undeploy
       delete self._functions[req.params.name];
-      jsonfile.writeFileSync(self._config.functionsFile, self._functions);
+      jsonfile.writeFileSync(self._functionsFile, self._functions);
       console.debug('Undeployed function ' + req.params.name);
       res.status(200).end();
     });
@@ -370,9 +353,6 @@ var self = {
 
       if (type === 'HTTP') {
 
-        // Record the time to report the execution time
-        var timeInMs = Date.now();
-
         // Pass through HTTP
         invoker.invoke(func, mod, req, res);
 
@@ -386,10 +366,7 @@ var self = {
             res.status(200).json(val);
           },
           failure: function(val) {
-            console.log('In context failure in emulator with ' + val);
-
             process.chdir(cwd);
-
             res.status(500).json(val);
           },
           done: function(val) {
@@ -404,12 +381,7 @@ var self = {
         invoker.invoke(func, mod, context, req.body);
       }
     } catch (err) {
-      console.log('In uncaught error');
-      res.status(500).send({
-        error: err.message
-      });
-
-      // res.status(500).send(err.stack);
+      res.status(500).send(err.stack);
     }
   },
 
@@ -420,9 +392,9 @@ var self = {
 
   main: function() {
     self._init();
-    console.debug('Starting emulator server on port ' + self._config.port +
+    console.debug('Starting emulator server on port ' + config.port +
       '...');
-    self._server = self._app.listen(self._config.port, function() {
+    self._server = self._app.listen(config.port, function() {
       console.debug('Server started');
     });
   },

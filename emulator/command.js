@@ -327,8 +327,7 @@ var action = function action(method, uri, callback, data) {
           } else if (error) {
             callback(error, null, response);
           } else {
-            callback(new Error(JSON.stringify(response.body)), null,
-              response);
+            callback(body, null, response);
           }
         });
     } catch (e) {

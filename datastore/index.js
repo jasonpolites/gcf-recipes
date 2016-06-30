@@ -29,13 +29,17 @@ var self = {
    * Simple binder function to cater for new HTTP function signatures.
    **/
   _httpBinder: function(req, res, fn) {
-    fn({
+
+    fn.call(fn, {
       success: function(val) {
-        res.send(val);
+        res.json(val);
       },
       failure: function(val) {
-        console.log('in failure callback with ' + val)
-        res.status(500).send(JSON.stringify(val));
+        if (val.message) {
+          res.status(500).send(val.message);
+          return;
+        }
+        res.status(500).json(val);
       }
     }, req.body);
   },
@@ -63,7 +67,6 @@ var self = {
       }
 
       self._saveEntity(k, value, function(err) {
-        console.log('In saveEntity callback with err ' + err);
         if (err) {
           logger.error(err);
           context.failure(err);
@@ -80,6 +83,7 @@ var self = {
   _get: function(context, data) {
 
     self._getEntity(data, function(err, dsKey, entity) {
+
       if (err) {
         logger.error(err);
         context.failure(err);
@@ -178,7 +182,6 @@ var self = {
 
   // Saves (creates or inserts) an entity with the given key
   _saveEntity: function(dsKey, value, callback) {
-    console.log('In save entity');
     var ds = self._getDSClient();
     ds.save({
       key: dsKey,

@@ -84,7 +84,7 @@ A local configuration (**config.js**) file is provided that allows you to config
 ### Logs
 
 Functions running in the emulator run in their own (detached) process, so 
-console logs from your function (e.g. console.log() calls) will not be piped to 
+console logs from your function (e.g. `console.log()` calls) will not be piped to 
 the stdout stream of the emulator.  Instead a log file can be found in **logs/emulator.log**
 
 We recommend you *tail* this log in a separate console window while you're testing

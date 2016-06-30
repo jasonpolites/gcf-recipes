@@ -89,6 +89,8 @@ the stdout stream of the emulator.  Instead a log file can be found in **logs/em
 
 We recommend you *tail* this log in a separate console window while you're testing
 
+Mac/Linux:
+
     tail -f logs/emulator.log
 
 (Note this log will automatically roll when it reaches 1MB)
@@ -128,7 +130,6 @@ Now when you invoke your function, you can debug!
 
     functions call helloWorld
 
-
 ![Debugging with Chrome Developer Tools](img/debugging.png "Debugging with Chrome Developer Tools")    
 
 #### Known Issues with Debugging
@@ -142,5 +143,10 @@ Now when you invoke your function, you can debug!
  - If you restart the emulator while the debug server is running you may need to refresh the browser for
    the default debug breakpoint to fire.
 
+ - Disconnecting the debugger can sometimes leave the emulator in a *weird* state. 
+   If you want to kill the emulator process (because it's stuck), then you'll have 
+   to kill the underlying `node` process
 
+   Mac/Linux:
 
+    `pgrep -f emulator.js | xargs kill`

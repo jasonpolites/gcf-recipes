@@ -4,38 +4,39 @@ var program = require('commander');
 var commander = require('./command.js');
 
 program
-  .version('0.0.1')
+  .version('0.0.1');
+// .description('Google Cloud Functions Simulator')
 
 program
   .command('start')
-  .description('Starts the emulator')
+  .description('Starts the simulator')
   .action(commander.start)
   .option('--project-id <id>',
     'Your Google Cloud Platform project ID. If not provided, the process.env.GCLOUD_PROJECT environment variable will not be set'
   )
   .option('--debug',
-    'If true, start the emulator in debug mode'
+    'If true, start the simulator in debug mode'
   );;
 
 program
   .command('stop')
-  .description('Stops the emulator')
+  .description('Stops the simulator')
   .action(commander.stop);
 
 program
   .command('restart')
-  .description('Restarts the emulator')
+  .description('Restarts the simulator')
   .action(commander.restart);
 
 program
   .command('clear')
   .description(
-    'Resets the emulator to its default state and clears any deploy functions')
+    'Resets the simulator to its default state and clears any deploy functions')
   .action(commander.clear);
 
 program
   .command('status')
-  .description('Returns the status of the emulator')
+  .description('Returns the status of the simulator')
   .action(commander.status);
 
 program
@@ -55,6 +56,12 @@ program
   .command('list')
   .description('Lists deployed functions')
   .action(commander.list);
+
+program
+  .command('get-logs')
+  .description('Displays the logs for the simulator')
+  .action(commander.getLogs)
+  .option('--limit <limit>', 'Number of log entries to be fetched. Default is 20');
 
 program
   .command('describe <function>')

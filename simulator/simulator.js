@@ -52,7 +52,7 @@ var self = {
     // automatically roll when it exceeds ~1MB. 
 
     // Ensure the logs directory exists
-    var logsDir = path.resolve(__dirname, 'logs');
+    var logsDir = path.resolve(__dirname, config.logFilePath);
 
     try {
       fs.statSync(logsDir);
@@ -68,7 +68,7 @@ var self = {
       transports: [
         new winston.transports.File({
           json: false,
-          filename: path.resolve(logsDir, 'emulator.log'),
+          filename: path.resolve(logsDir, config.logFileName),
           maxsize: 1048576
         })
       ],

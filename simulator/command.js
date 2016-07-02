@@ -14,11 +14,16 @@
 
 var TIMEOUT_POLL_INCREMENT = 500;
 var request = require('request');
+var path = require('path');
 var colors = require('colors');
 var net = require('net');
 var spawn = require('child_process').spawn;
 var Table = require('cli-table2');
 var config = require('./config.js');
+var logreader = require('./logreader.js');
+
+var LOG_FILE_PATH = path.join(path.join(__dirname, config.logFilePath), config.logFileName);
+var APP_NAME = 'Cloud Functions Simulator ';
 
 var self = {
 
@@ -42,7 +47,7 @@ var self = {
       projectId = config.projectId;
     }
 
-    startEmulator(config.port, options.debug, projectId,
+    startSimulator(config.port, options.debug, projectId,
       function(err) {
         if (!err) {
           self.list(options, callback);
@@ -56,7 +61,7 @@ var self = {
 
   stop: function(options, callback) {
     doIfRunning(function() {
-      stopEmulator(config.port, callback);
+      stopSimulator(config.port, callback);
     }, callback);
   },
 
@@ -67,7 +72,7 @@ var self = {
           self.writer.error(err);
           return;
         }
-        stopEmulator(config.port, function(err) {
+        stopSimulator(config.port, function(err) {
           if (err) {
             self.writer.error(err);
             return;
@@ -94,7 +99,7 @@ var self = {
           return;
         }
 
-        self.writer.write("Cloud Functions Emulator ");
+        self.writer.write(APP_NAME);
         self.writer.write('CLEARED\n'.green);
         self.list(options, callback);
       });
@@ -102,7 +107,7 @@ var self = {
 
   status: function(options, callback) {
     checkStatus(config.port, function(err) {
-      self.writer.write("Cloud Functions is ");
+      self.writer.write(APP_NAME + "is ");
       if (err) {
         self.writer.write("STOPPED\n".red);
         if (callback) {
@@ -119,6 +124,20 @@ var self = {
       }
     });
   },
+
+  getLogs: function(options) {
+
+    var limit = 20;
+    if (options.limit) {
+      limit = parseInt(options.limit);
+    }
+
+    logreader.readLogLines(LOG_FILE_PATH, limit, function(val) {
+      self.writer.write(val);
+    });
+
+  },
+
   deploy: function(modulePath, entryPoint, options, callback) {
 
     var type = (options.triggerHttp === true) ? 'H' : 'B';
@@ -255,7 +274,8 @@ var self = {
         checkStatus(config.port, function(err) {
           if (err) {
             self.writer.error(
-              'Cloud Functions Emulator exited unexpectedly.  Check the emulator.log for more details'
+              APP_NAME +
+              'exited unexpectedly.  Check the simulator.log for more details'
               .red);
             return;
           }
@@ -304,7 +324,8 @@ var action = function action(method, uri, callback, data) {
   checkStatus(config.port, function(err) {
     if (err) {
       callback(
-        'Cloud Functions Emulator is not running.  Use \'functions start\' to start the emulator'
+        APP_NAME +
+        'is not running.  Use \'functions start\' to start the simulator'
         .cyan
       );
       return;
@@ -341,7 +362,8 @@ var doIfRunning = function doIfRunning(running, notRunning) {
   checkStatus(config.port, function(err) {
     if (err) {
       self.writer.log(
-        'Cloud Functions Emulator is not running ¯\\_(ツ)_/¯'.cyan);
+        APP_NAME +
+        'is not running ¯\\_(ツ)_/¯'.cyan);
       if (notRunning) {
         notRunning();
       }
@@ -351,14 +373,13 @@ var doIfRunning = function doIfRunning(running, notRunning) {
   });
 }
 
-var startEmulator = function startEmulator(port, debug, projectId, callback) {
+var startSimulator = function startSimulator(port, debug, projectId, callback) {
 
   checkStatus(config.port, function(err) {
     if (err) {
-      self.writer.log('Starting Cloud Functions Emulator on port ' + port +
-        '...');
+      self.writer.log('Starting ' + APP_NAME + 'on port ' + port + '...');
 
-      var args = [__dirname + '/emulator.js', port, projectId];
+      var args = [__dirname + '/simulator.js', port, projectId];
 
       if (debug === true) {
         args.unshift('--debug');
@@ -379,19 +400,19 @@ var startEmulator = function startEmulator(port, debug, projectId, callback) {
           }
           return;
         }
-        self.writer.write("Cloud Functions Emulator ");
+        self.writer.write(APP_NAME);
         self.writer.write('STARTED\n'.green);
         if (callback) {
           callback();
         }
       });
     } else {
-      self.writer.log('Cloud Functions Emulator already running'.cyan);
+      self.writer.log(APP_NAME + 'already running'.cyan);
     }
   });
 }
 
-var stopEmulator = function stopEmulator(port, callback) {
+var stopSimulator = function stopSimulator(port, callback) {
   request.del('http://localhost:' + port, function(error, response, body) {
     if (!error && response.statusCode == 200) {
 
@@ -402,7 +423,7 @@ var stopEmulator = function stopEmulator(port, callback) {
           return;
         }
 
-        self.writer.write("Cloud Functions Emulator ");
+        self.writer.write(APP_NAME);
         self.writer.write('STOPPED\n'.red);
         if (callback) {
           callback();
@@ -431,7 +452,7 @@ var waitForStop = function waitForStart(port, timeout, callback, i) {
     i--;
 
     if (i <= 0) {
-      callback('Error: Timeout waiting for emulator stop'.red);
+      callback('Error: Timeout waiting for simulator stop'.red);
       return;
     }
 
@@ -455,7 +476,7 @@ var waitForStart = function waitForStart(port, timeout, callback, i) {
     i--;
 
     if (i <= 0) {
-      callback('Error: Timeout waiting for emulator start'.red);
+      callback('Error: Timeout waiting for simulator start'.red);
       return;
     }
 

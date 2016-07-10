@@ -1,7 +1,7 @@
 var conf = {
   port: 8008,
-  debug: false,
-  projectId: 'gcf-tests',
+  verbose: false,
+  projectId: '<YOUR PROJECT ID>',
   timeout: 3000,
   logFileName: 'simulator.log',
   logFilePath: 'logs'

@@ -64,12 +64,19 @@ var self = {
       }
     }
 
+    var logLevel = 'info';
+
+    if (config.verbose === true) {
+      logLevel = 'debug';
+    }
+
     self._log = new winston.Logger({
       transports: [
         new winston.transports.File({
           json: false,
           filename: path.resolve(logsDir, config.logFileName),
-          maxsize: 1048576
+          maxsize: 1048576,
+          level: logLevel
         })
       ],
       exitOnError: false
@@ -151,8 +158,6 @@ var self = {
 
     // responseTime will allow us to track the execution time of a function
     self._app.use(responseTime());
-
-    // self._app.use(timeout(config.timeout));
 
     // Not really anything we need to do here, but responding to a browser GET
     // seems reasonable in case the developer wonders what's hogging their port

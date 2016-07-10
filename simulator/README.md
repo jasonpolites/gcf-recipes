@@ -1,9 +1,9 @@
 <img src="https://avatars2.githubusercontent.com/u/2810941?v=3&s=96" alt="Google Cloud Platform logo" title="Google Cloud Platform" align="right" height="96" width="96"/>
 
 # Google Cloud Functions
-## Local Execution Emulator
+## Local Execution Simulator
 
-This is a simple emulator that allows you to test your Cloud Functions on your local machine
+This is a simple simulator that allows you to test your Cloud Functions on your local machine
 
 ### Setup
 
@@ -19,11 +19,11 @@ This is a simple emulator that allows you to test your Cloud Functions on your l
 
         Commands:
 
-        start [options]                       Starts the emulator
-        stop                                  Stops the emulator
-        restart                               Restarts the emulator
-        clear                                 Resets the emulator to its default state and clears any deploy functions
-        status                                Returns the status of the emulator
+        start [options]                       Starts the simulator
+        stop                                  Stops the simulator
+        restart                               Restarts the simulator
+        clear                                 Resets the simulator to its default state and clears any deploy functions
+        status                                Returns the status of the simulator
         deploy [options] <module> <function>  Deploys a function with the given module path and entry point
         undeploy <function>                   Removes a previously deployed function
         list                                  Lists deployed functions
@@ -35,15 +35,15 @@ This is a simple emulator that allows you to test your Cloud Functions on your l
 
 ### Deployment
 
-The emulator can host both BACKGROUND and HTTP (foreground) Cloud Functions.  
-By default the emulator will consider functions deployed to be BACKGROUND functions. 
+The simulator can host both BACKGROUND and HTTP (foreground) Cloud Functions.  
+By default the simulator will consider functions deployed to be BACKGROUND functions. 
 To deploy an HTTP function, use the `--trigger-http` argument
 
     functions deploy <module> <function> --trigger-http
 
 ### Executing a Cloud Function
 
-Start the Emulator
+Start the Simulator
 
     functions start    
 
@@ -56,7 +56,7 @@ Invoke the function
 
     functions call helloWorld
 
-Stop the Emulator
+Stop the Simulator
 
     functions stop     
 
@@ -76,28 +76,28 @@ A local configuration (**config.js**) file is provided that allows you to config
 
 | Property | Type | Description |
 |-------|---|----------|
-| port | integer | The TCP port on which the emulator will listen (default: 8008) | 
-| debug | boolean | True if you want to see logs from the emulator itself (default: false) |
+| port | integer | The TCP port on which the simulator will listen (default: 8008) | 
+| verbose | boolean | True if you want to see logs from the simulator itself (default: false) |
 | projectId | string | Your GCP project ID (default:none) |
-| timeout | integer | Timeout (ms) to wait for the emulator to start (default:3000) |
+| timeout | integer | Timeout (ms) to wait for the simulator to start (default:3000) |
 
 ### Logs
 
-Functions running in the emulator run in their own (detached) process, so 
+Functions running in the simulator run in their own (detached) process, so 
 console logs from your function (e.g. `console.log()` calls) will not be piped to 
-the stdout stream of the emulator.  Instead a log file can be found in **logs/emulator.log**
+the stdout stream of the simulator.  Instead a log file can be found in **logs/simulator.log**
 
 We recommend you *tail* this log in a separate console window while you're testing
 
 Mac/Linux:
 
-    tail -f logs/emulator.log
+    tail -f logs/simulator.log
 
 (Note this log will automatically roll when it reaches 1MB)
 
 ### Debugging
 
-To start the emulator in *debug* mode, simply use the `--debug` flag
+To start the simulator in *debug* mode, simply use the `--debug` flag
 
     functions start --debug
 
@@ -108,13 +108,13 @@ with your favorite IDE
 #### Debugging with Chrome Developer Tools
 
 If your IDE doesn't support connecting to a Node.js debugger process, you can 
-easily debug your Cloud Functions in the emulator using [node-inspector](https://github.com/node-inspector/node-inspector)
+easily debug your Cloud Functions in the simulator using [node-inspector](https://github.com/node-inspector/node-inspector)
 
 First, install node-inspector
 
     npm install -g node-inspector
 
-Start the emulator in debug mode
+Start the simulator in debug mode
 
     functions start --debug
 
@@ -140,13 +140,13 @@ Now when you invoke your function, you can debug!
 
     You can safely ignore it.  It's an [open issue](https://github.com/nodejs/node/issues/781) in Node.js
 
- - If you restart the emulator while the debug server is running you may need to refresh the browser for
+ - If you restart the simulator while the debug server is running you may need to refresh the browser for
    the default debug breakpoint to fire.
 
- - Disconnecting the debugger can sometimes leave the emulator in a *weird* state. 
-   If you want to kill the emulator process (because it's stuck), then you'll have 
+ - Disconnecting the debugger can sometimes leave the simulator in a *weird* state. 
+   If you want to kill the simulator process (because it's stuck), then you'll have 
    to kill the underlying `node` process
 
    Mac/Linux:
 
-    `pgrep -f emulator.js | xargs kill`
+    `pgrep -f simulator.js | xargs kill`

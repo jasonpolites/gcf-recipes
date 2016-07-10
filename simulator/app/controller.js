@@ -111,6 +111,7 @@ var self = {
 
   kill: function(callback) {
     try {
+      // TODO: Doesn't need to be sync
       var stats = fs.statSync(PID_PATH);
       if (stats.isFile()) {
         // Read the PID
@@ -156,6 +157,7 @@ var self = {
           callback(err);
           return;
         }
+
         self.stop(function(err) {
           if (err) {
             callback(err);
@@ -198,7 +200,6 @@ var self = {
         if (callback) {
           callback(null, self.STOPPED);
         }
-
         return;
       }
       if (callback) {
@@ -208,15 +209,12 @@ var self = {
   },
 
   getLogs: function(writer, limit) {
-    console.log('In getLogs');
-    console.log(LOG_FILE_PATH);
     if (!limit) {
       limit = 20;
     }
     logreader.readLogLines(LOG_FILE_PATH, limit, function(val) {
       writer.write(val);
     });
-
   },
 
   deploy: function(modulePath, entryPoint, type, callback) {

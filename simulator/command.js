@@ -21,8 +21,10 @@ var spawn = require('child_process').spawn;
 var Table = require('cli-table2');
 var config = require('./config.js');
 var logreader = require('./logreader.js');
+var fs = require('fs');
 
 var LOG_FILE_PATH = path.join(path.join(__dirname, config.logFilePath), config.logFileName);
+var PID_PATH = path.join(__dirname, 'process.pid');
 var APP_NAME = 'Cloud Functions Simulator ';
 
 var self = {
@@ -63,6 +65,29 @@ var self = {
     doIfRunning(function() {
       stopSimulator(config.port, callback);
     }, callback);
+  },
+
+  kill: function(options, callback) {
+    var stats = fs.statSync(PID_PATH);
+    if (stats.isFile()) {
+      // Read the PID
+      var pid = fs.readFileSync(PID_PATH);
+      if (pid) {
+        pid = parseInt(pid);
+
+        console.log(process.kill(pid, 0));
+
+        // ensure the process exists
+        if (process.kill(pid, 0) !== 0) {
+          process.kill(pid);
+          self.status(options, callback);
+        }
+
+        return;
+      }
+    }
+
+    callback('No running process');
   },
 
   restart: function(options, callback) {
@@ -389,6 +414,14 @@ var startSimulator = function startSimulator(port, debug, projectId, callback) {
         detached: true,
         stdio: 'inherit'
       });
+
+      // Write the pid to the file system in case we need to kill it
+      fs.writeFile(PID_PATH, child.pid,
+        function(err) {
+          if (err) {
+            return console.log(err);
+          }
+        });
 
       child.unref();
 

@@ -24,6 +24,11 @@ program
   .action(commander.stop);
 
 program
+  .command('kill')
+  .description('Force kills the simulator process if it stops responding')
+  .action(commander.kill);
+
+program
   .command('restart')
   .description('Restarts the simulator')
   .action(commander.restart);
@@ -31,7 +36,8 @@ program
 program
   .command('clear')
   .description(
-    'Resets the simulator to its default state and clears any deploy functions')
+    'Resets the simulator to its default state and clears any deploy functions'
+  )
   .action(commander.clear);
 
 program
@@ -61,7 +67,8 @@ program
   .command('get-logs')
   .description('Displays the logs for the simulator')
   .action(commander.getLogs)
-  .option('--limit <limit>', 'Number of log entries to be fetched. Default is 20');
+  .option('--limit <limit>',
+    'Number of log entries to be fetched. Default is 20');
 
 program
   .command('describe <function>')

@@ -88,7 +88,7 @@ A local configuration (**config.js**) file is provided that allows you to config
 
 Functions running in the simulator run in their own (detached) process, so 
 console logs from your function (e.g. `console.log()` calls) will not be piped to 
-the stdout stream of the simulator.  Instead a log file can be found in **logs/simulator.log**
+the stdout stream of the simulator.  Instead a log file can be found in **app/logs/simulator.log**
 
 You can view the logs from your functions using the `get-logs` command
 
@@ -102,7 +102,7 @@ Alternatively, you can simply *tail* the log file itself
 
 Mac/Linux:
 
-    tail -f logs/simulator.log
+    tail -f app/logs/simulator.log
 
 (Note this log will automatically roll when it reaches 1MB)
 

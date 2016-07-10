@@ -1,7 +1,6 @@
-<img src="https://avatars2.githubusercontent.com/u/2810941?v=3&s=96" alt="Google Cloud Platform logo" title="Google Cloud Platform" align="right" height="96" width="96"/>
 
 # Google Cloud Functions
-## Local Execution Simulator
+## Local Execution Simulator (Unofficial)
 
 This is a simple simulator that allows you to test your Cloud Functions on your local machine
 
@@ -17,21 +16,25 @@ This is a simple simulator that allows you to test your Cloud Functions on your 
 
     functions [options] [command]
 
-        Commands:
+    Commands:
 
         start [options]                       Starts the simulator
-        stop                                  Stops the simulator
+        stop                                  Stops the simulator gracefully
+        kill                                  Force kills the simulator process if it stops responding
         restart                               Restarts the simulator
         clear                                 Resets the simulator to its default state and clears any deploy functions
         status                                Returns the status of the simulator
         deploy [options] <module> <function>  Deploys a function with the given module path and entry point
-        undeploy <function>                   Removes a previously deployed function
+        delete <function>                     Undeploys a previously deployed function (does NOT delete the function source code)
         list                                  Lists deployed functions
+        get-logs [options]                    Displays the logs for the simulator
         describe <function>                   Describes the details of a single deployed function
         call [options] <function>             Invokes a function
 
-        Options:
+    Options:
+
         -h, --help     output usage information
+        -V, --version  output the version number
 
 ### Deployment
 
@@ -147,6 +150,29 @@ Now when you invoke your function, you can debug!
    If you want to kill the simulator process (because it's stuck), then you'll have 
    to kill the underlying `node` process
 
+   `functions kill`
+
+   If that doesn't work, then you may need to go medieval
+
    Mac/Linux:
 
     `pgrep -f simulator.js | xargs kill`
+
+
+- If you see the following error when deploying
+
+    `Error: Module version mismatch`
+
+    This usually means that the module you are trying to deploy has a dependency that either 
+    conflicts with the same dependency in the simulator, but has a different version.  Or it
+    indicates that the dependencies in the module being deployed were build with a different 
+    version of npm.  In most cases, deleteing `node_modules` from the module being deployed and
+    re-running `npm install` will resolve this.
+
+- If you see the following error when trying to invoke a function
+
+    `TypeError: res.send is not a function`
+
+    It means you deployed an HTTP function as a BACKGROUND function (so it's expecting an 
+    HTTP request but the simulator didn't give it one).  Make sure to deploy HTTP functions
+    with the `--trigger-http` flag.

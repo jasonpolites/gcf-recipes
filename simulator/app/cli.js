@@ -15,8 +15,10 @@
 var colors = require('colors');
 var Table = require('cli-table2');
 var controller = require('./controller.js')
+var fs = require('fs');
 var config = require('../config.js');
 var APP_NAME = 'Cloud Functions Simulator ';
+
 
 var self = {
 
@@ -80,11 +82,19 @@ var self = {
           type = body[func].type;
           path = body[func].path;
 
-          table.push([
-            func.white,
-            type.white,
-            path.white
-          ]);
+          if (self._pathExists(path)) {
+            table.push([
+              func.white,
+              type.white,
+              path.white
+            ]);
+          } else {
+            table.push([
+              func.white,
+              type.white,
+              path.red
+            ]);
+          }
 
           count++;
         }
@@ -216,7 +226,7 @@ var self = {
           return;
         }
         self.writer.log('Function ' + name + ' removed'.green);
-        self.list(options, callback);
+        self.list();
       });
     });
   },
@@ -275,6 +285,15 @@ var self = {
         ).cyan);
       }
     });
+  },
+
+  _pathExists: function(p) {
+    try {
+      fs.statSync(p);
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 };
 

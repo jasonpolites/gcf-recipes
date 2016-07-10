@@ -92,17 +92,17 @@ the stdout stream of the simulator.  Instead a log file can be found in **logs/s
 
 You can view the logs from your functions using the ``get-logs` command
 
-    `functions get-logs`
+    functions get-logs
 
 By default this will return the most recent 20 log lines.  You can alter this with the `--limit` flag
 
-    `functions get-logs --limit 100`
+    functions get-logs --limit 100
 
 Alternatively, you can simply *tail* the log file itself
 
 Mac/Linux:
 
-    `tail -f logs/simulator.log`
+    tail -f logs/simulator.log
 
 (Note this log will automatically roll when it reaches 1MB)
 

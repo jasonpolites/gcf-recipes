@@ -20,7 +20,7 @@ const path = require('path');
 const jsonfile = require('jsonfile');
 const fs = require('fs');
 const winston = require('winston');
-const config = require('./config');
+const config = require('../config');
 const invoker = require('./invoker');
 
 var self = {
@@ -83,10 +83,6 @@ var self = {
     // from the emulator itself, so all emulator logs should be written at the 
     // DEBUG level.  We've made an exception for error logs in the emulator, just
     // to make it easier for developers to recognize failures in the emulator.
-    // function formatArgs(args) {
-    //   return [util.format.apply(util.format, Array.prototype.slice.call(
-    //     args))];
-    // }
 
     console.log = function() {
       self._log.info.apply(self._log, arguments);
@@ -145,6 +141,14 @@ var self = {
       extended: true
     }));
 
+    // Never cache
+    self._app.use(function(err, req, res, next) {
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', 0);
+      next(err);
+    });
+
     // responseTime will allow us to track the execution time of a function
     self._app.use(responseTime());
 
@@ -157,8 +161,12 @@ var self = {
     // function with that name if we assume that all function names in the 
     // emulator are *actual* function names from the module
     self._app.get('/', function(req, res) {
-      if (req.query.project) {
-        res.send(config.projectId);
+      if (req.query.env) {
+        res.set('Content-type', 'application/json');
+        res.send({
+          projectId: config.projectId,
+          debug: process.env.DEBUG
+        });
       } else {
         res.send('Cloud Functions Emulator RUNNING');
       }
@@ -315,7 +323,7 @@ var self = {
       if (func) {
         self._invoke(func, req, res);
       } else {
-        res.status(404).send('No function with name ' + func.name);
+        res.status(404).send('No function with name ' + fn);
       }
     });
   },

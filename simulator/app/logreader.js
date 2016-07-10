@@ -9,16 +9,16 @@ module.exports = {
 
       var buf = fs.readFileSync(filePath);
       var chr = null;
-      var marker = buf.length - 1;
+      var cursor = buf.length;
       var count = 0;
 
-      for (var i = marker; i >= 0; --i) {
+      for (var i = cursor; i >= 0; --i) {
         chr = buf.toString('utf8', i - 1, i);
         if (chr === EOL) {
           // We hit a newline char
-          if (marker !== i) {
+          if (cursor !== i) {
             // Mark this position
-            marker = i;
+            cursor = i;
             if (++count >= num) {
               break;
             }
@@ -26,9 +26,14 @@ module.exports = {
         }
       }
 
-      if (count > 0) {
-        output(buf.toString('utf8', marker, buf.length));
+      // The last line in the squence (the first line in the file)
+      // will not terminate with EOL, so ensure we're always include 
+      // the last line
+      if (count < num) {
+        cursor = 0;
       }
+
+      output(buf.toString('utf8', cursor, buf.length) + '\n');
 
     } catch (e) {
       if (e.code === 'ENOENT') {

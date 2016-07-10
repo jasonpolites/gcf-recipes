@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 
 var program = require('commander');
-var commander = require('./command.js');
+var cli = require('./app/cli.js');
 
 program
   .version('0.0.1');
@@ -10,7 +10,7 @@ program
 program
   .command('start')
   .description('Starts the simulator')
-  .action(commander.start)
+  .action(cli.start)
   .option('--project-id <id>',
     'Your Google Cloud Platform project ID. If not provided, the process.env.GCLOUD_PROJECT environment variable will not be set'
   )
@@ -20,65 +20,67 @@ program
 
 program
   .command('stop')
-  .description('Stops the simulator')
-  .action(commander.stop);
+  .description('Stops the simulator gracefully')
+  .action(cli.stop);
 
 program
   .command('kill')
   .description('Force kills the simulator process if it stops responding')
-  .action(commander.kill);
+  .action(cli.kill);
 
 program
   .command('restart')
   .description('Restarts the simulator')
-  .action(commander.restart);
+  .action(cli.restart);
 
 program
   .command('clear')
   .description(
     'Resets the simulator to its default state and clears any deploy functions'
   )
-  .action(commander.clear);
+  .action(cli.clear);
 
 program
   .command('status')
   .description('Returns the status of the simulator')
-  .action(commander.status);
+  .action(cli.status);
 
 program
   .command('deploy <module> <function>')
   .description(
     'Deploys a function with the given module path and entry point'
   )
-  .action(commander.deploy)
+  .action(cli.deploy)
   .option('--trigger-http', 'Deploys this function as an HTTP function');
 
 program
-  .command('undeploy <function>')
-  .description('Removes a previously deployed function')
-  .action(commander.undeploy);
+  .command('delete <function>')
+  .description(
+    'Undeploys a previously deployed function (does NOT delete the function source code)'
+  )
+  .action(cli.undeploy);
 
 program
   .command('list')
   .description('Lists deployed functions')
-  .action(commander.list);
+  .action(cli.list);
 
 program
   .command('get-logs')
   .description('Displays the logs for the simulator')
-  .action(commander.getLogs)
+  .action(cli.getLogs)
   .option('--limit <limit>',
     'Number of log entries to be fetched. Default is 20');
 
 program
   .command('describe <function>')
   .description('Describes the details of a single deployed function')
-  .action(commander.describe);
+  .action(cli.describe);
 
 program
   .command('call <function>')
   .description('Invokes a function')
-  .action(commander.call)
+  .action(cli.call)
   .option('--data <json>',
     'The data to send to the function, expressed as a JSON document');
 

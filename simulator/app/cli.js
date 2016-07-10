@@ -12,19 +12,10 @@
 
 'use strict';
 
-var TIMEOUT_POLL_INCREMENT = 500;
-var request = require('request');
-var path = require('path');
 var colors = require('colors');
-var net = require('net');
-var spawn = require('child_process').spawn;
 var Table = require('cli-table2');
-var config = require('./config.js');
-var logreader = require('./logreader.js');
-var fs = require('fs');
-
-var LOG_FILE_PATH = path.join(path.join(__dirname, config.logFilePath), config.logFileName);
-var PID_PATH = path.join(__dirname, 'process.pid');
+var controller = require('./controller.js')
+var config = require('../config.js');
 var APP_NAME = 'Cloud Functions Simulator ';
 
 var self = {
@@ -41,182 +32,40 @@ var self = {
     }
   },
 
-  start: function(options, callback) {
+  start: function(options) {
     var projectId;
     if (options && options.projectId) {
       projectId = options.projectId;
-    } else {
-      projectId = config.projectId;
     }
 
-    startSimulator(config.port, options.debug, projectId,
-      function(err) {
-        if (!err) {
-          self.list(options, callback);
-        } else {
-          if (callback) {
-            callback(err);
-          }
-        }
-      });
-  },
+    var debug = (options && options.debug) || false;
 
-  stop: function(options, callback) {
-    doIfRunning(function() {
-      stopSimulator(config.port, callback);
-    }, callback);
-  },
+    self.writer.log('Starting ' + APP_NAME + 'on port ' + config.port + '...');
 
-  kill: function(options, callback) {
-    var stats = fs.statSync(PID_PATH);
-    if (stats.isFile()) {
-      // Read the PID
-      var pid = fs.readFileSync(PID_PATH);
-      if (pid) {
-        pid = parseInt(pid);
-
-        console.log(process.kill(pid, 0));
-
-        // ensure the process exists
-        if (process.kill(pid, 0) !== 0) {
-          process.kill(pid);
-          self.status(options, callback);
-        }
-
-        return;
-      }
-    }
-
-    callback('No running process');
-  },
-
-  restart: function(options, callback) {
-    doIfRunning(function() {
-      getCurrentProjectId(function(err, projectId) {
-        if (err) {
-          self.writer.error(err);
-          return;
-        }
-        stopSimulator(config.port, function(err) {
-          if (err) {
-            self.writer.error(err);
-            return;
-          }
-          self.start({
-            projectId: projectId
-          }, callback);
-        });
-      });
-    }, callback);
-  },
-
-  clear: function(options, callback) {
-    // Remove the deployed functions
-    action('DELETE', 'http://localhost:' + config.port + '/function/',
-      function(err) {
-        if (err) {
-          self.writer.error(err);
-          self.writer.error('Clear command aborted'.red);
-
-          if (callback) {
-            callback(err);
-          }
-          return;
-        }
-
-        self.writer.write(APP_NAME);
-        self.writer.write('CLEARED\n'.green);
-        self.list(options, callback);
-      });
-  },
-
-  status: function(options, callback) {
-    checkStatus(config.port, function(err) {
-      self.writer.write(APP_NAME + "is ");
+    controller.start(projectId, debug, function(err, status) {
       if (err) {
-        self.writer.write("STOPPED\n".red);
-        if (callback) {
-          callback(err);
-        }
+        self.writer.error(err);
         return;
       }
 
-      self.writer.write("RUNNING".green);
-      self.writer.write(" on port " + config.port + "\n");
-
-      if (callback) {
-        callback();
+      if (status === controller.ALREADY_RUNNING) {
+        self.writer.log(APP_NAME + 'already running'.cyan);
+      } else {
+        self.writer.write(APP_NAME);
+        self.writer.write('STARTED\n'.green);
       }
+
+      self.list();
     });
   },
 
-  getLogs: function(options) {
-
-    var limit = 20;
-    if (options.limit) {
-      limit = parseInt(options.limit);
-    }
-
-    logreader.readLogLines(LOG_FILE_PATH, limit, function(val) {
-      self.writer.write(val);
-    });
-
-  },
-
-  deploy: function(modulePath, entryPoint, options, callback) {
-
-    var type = (options.triggerHttp === true) ? 'H' : 'B';
-
-    action('POST', 'http://localhost:' + config.port + '/function/' +
-      entryPoint +
-      '?path=' + modulePath +
-      '&type=' + type,
-      function(err, body) {
+  list: function() {
+    self._doIfRunning(function() {
+      controller.list(function(err, body) {
         if (err) {
           self.writer.error(err);
-          self.writer.error('Deployment aborted'.red);
-
-          if (callback) {
-            callback(err);
-          }
           return;
         }
-        self.writer.log('Function ' + entryPoint + ' deployed'.green);
-        printDescribe(body);
-        if (callback) {
-          callback(null, body);
-        }
-      });
-  },
-  undeploy: function(fnName, options, callback) {
-    action('DELETE', 'http://localhost:' + config.port + '/function/' +
-      fnName,
-      function(err) {
-        if (err) {
-          self.writer.error(err);
-          self.writer.error('Undeploy aborted'.red);
-
-          if (callback) {
-            callback(err);
-          }
-          return;
-        }
-        self.writer.log('Function ' + fnName + ' removed'.green);
-        self.list(options, callback);
-      });
-  },
-  list: function(options, callback) {
-    action('GET', 'http://localhost:' + config.port + '/function',
-      function(err, body) {
-        if (err) {
-          self.writer.error(err);
-          if (callback) {
-            callback(err);
-          }
-          return;
-        }
-
-        body = JSON.parse(body);
 
         var table = new Table({
           head: ['Name'.cyan, 'Type'.cyan, 'Path'.cyan],
@@ -251,52 +100,153 @@ var self = {
         var output = table.toString();
 
         self.writer.log(output);
-
-        if (callback) {
-          callback(null, body);
-        }
       });
+    });
   },
-  describe: function(name, options, callback) {
-    action('GET', 'http://localhost:' + config.port + '/function/' + name,
-      function(err, body) {
+
+  stop: function(options, callback) {
+    controller.stop(function(err) {
+      if (err) {
+        self.writer.error(err);
+        callback(err);
+        return;
+      }
+
+      self.writer.write(APP_NAME);
+      self.writer.write('STOPPED\n'.red);
+    });
+  },
+
+  kill: function() {
+    controller.kill(function(err, result) {
+      if (err) {
+        self.writer.error(err);
+        return;
+      }
+
+      self.writer.write(APP_NAME);
+
+      if (result === controller.KILLED) {
+        self.writer.write('KILLED\n'.red);
+      } else {
+        self.writer.write('NOT RUNNING\n'.cyan);
+      }
+    });
+  },
+
+  restart: function() {
+    controller.restart(function(err, status) {
+      if (err) {
+        self.writer.error(err);
+        return;
+      }
+      if (status === controller.STOPPED) {
+        self.start();
+      } else {
+        self.writer.write(APP_NAME);
+        self.writer.write('RESTARTED\n'.green);
+        self.list();
+      }
+    });
+  },
+
+  clear: function() {
+    self._doIfRunning(function() {
+      controller.clear(function(err) {
         if (err) {
           self.writer.error(err);
+          self.writer.error('Clear command aborted'.red);
+          return;
+        }
+        self.writer.write(APP_NAME);
+        self.writer.write('CLEARED\n'.green);
+        self.list();
+      });
+    });
+  },
 
-          if (callback) {
-            callback(err);
-          }
+  status: function() {
+    controller.status(function(err, status) {
+      if (err) {
+        self.writer.error(err);
+        return;
+      }
 
+      self.writer.write(APP_NAME + "is ");
+
+      if (status === controller.RUNNING) {
+        self.writer.write("RUNNING".green);
+        self.writer.write(" on port " + config.port + "\n");
+      } else {
+        self.writer.write("STOPPED\n".red);
+      }
+    });
+  },
+
+  getLogs: function(options) {
+    var limit = 20;
+    if (options.limit) {
+      limit = parseInt(options.limit);
+    }
+    controller.getLogs(self.writer, limit);
+  },
+
+  deploy: function(modulePath, entryPoint, options) {
+    self._doIfRunning(function() {
+      var type = (options.triggerHttp === true) ? 'H' : 'B';
+      controller.deploy(modulePath, entryPoint, type, function(err, body) {
+        if (err) {
+          self.writer.error(err);
+          self.writer.error('Deployment aborted'.red);
+          return;
+        }
+        self.writer.log('Function ' + entryPoint + ' deployed'.green);
+        printDescribe(body);
+      });
+    });
+  },
+
+  undeploy: function(name) {
+    self._doIfRunning(function() {
+      controller.undeploy(name, function(err, body) {
+        if (err) {
+          self.writer.error(err);
+          self.writer.error('Delete aborted'.red);
+          return;
+        }
+        self.writer.log('Function ' + name + ' removed'.green);
+        self.list(options, callback);
+      });
+    });
+  },
+
+  describe: function(name) {
+    self._doIfRunning(function() {
+      controller.describe(name, function(err, body) {
+        if (err) {
+          self.writer.error(err);
           return;
         }
         printDescribe(body);
-        if (callback) {
-          callback(null, body);
-        }
       });
+    });
   },
-  call: function(name, options, callback) {
-    action('POST', 'http://localhost:' + config.port + '/' + name,
-      function(err, body, response) {
+
+  call: function(name, options) {
+
+    self._doIfRunning(function() {
+      controller.call(name, options.data, function(err, body, response) {
         if (err) {
           self.writer.error(err);
-          if (callback) {
-            callback(err);
-          }
           return;
         }
-
         self.writer.write("Function completed in:  ");
         self.writer.write((response.headers['x-response-time'] + '\n')
           .green);
 
         self.writer.log(body);
 
-        if (callback) {
-          callback(null, body);
-        }
-
-        checkStatus(config.port, function(err) {
+        controller.status(function(err, status) {
           if (err) {
             self.writer.error(
               APP_NAME +
@@ -305,8 +255,25 @@ var self = {
             return;
           }
         });
+      });
+    });
+  },
 
-      }, options.data);
+  _doIfRunning: function(fn) {
+    controller.status(function(err, status) {
+      if (err) {
+        self.writer.error(err);
+        return;
+      }
+
+      if (status === controller.RUNNING) {
+        fn();
+      } else {
+        self.writer.write((APP_NAME +
+          'is not running.  Use \'functions start\' to start the simulator\n'
+        ).cyan);
+      }
+    });
   }
 };
 
@@ -349,9 +316,9 @@ var action = function action(method, uri, callback, data) {
   checkStatus(config.port, function(err) {
     if (err) {
       callback(
-        APP_NAME +
-        'is not running.  Use \'functions start\' to start the simulator'
-        .cyan
+        (APP_NAME +
+          'is not running.  Use \'functions start\' to start the simulator'
+        ).cyan
       );
       return;
     }
@@ -398,6 +365,27 @@ var doIfRunning = function doIfRunning(running, notRunning) {
   });
 }
 
+var writePID = function(pid) {
+  // Write the pid to the file system in case we need to kill it
+  fs.writeFile(PID_PATH, pid,
+    function(err) {
+      if (err) {
+        // Don't throw, just abort
+        console.log(err);
+      }
+    });
+}
+
+var deletePID = function() {
+  fs.unlink(PID_PATH,
+    function(err) {
+      if (err) {
+        // Don't throw, just abort
+        console.log(err);
+      }
+    });
+}
+
 var startSimulator = function startSimulator(port, debug, projectId, callback) {
 
   checkStatus(config.port, function(err) {
@@ -416,12 +404,7 @@ var startSimulator = function startSimulator(port, debug, projectId, callback) {
       });
 
       // Write the pid to the file system in case we need to kill it
-      fs.writeFile(PID_PATH, child.pid,
-        function(err) {
-          if (err) {
-            return console.log(err);
-          }
-        });
+      writePID(child.pid);
 
       child.unref();
 
@@ -458,6 +441,8 @@ var stopSimulator = function stopSimulator(port, callback) {
 
         self.writer.write(APP_NAME);
         self.writer.write('STOPPED\n'.red);
+        deletePID();
+
         if (callback) {
           callback();
         }

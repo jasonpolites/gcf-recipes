@@ -172,8 +172,8 @@ Now when you invoke your function, you can debug!
     `Error: Module version mismatch`
 
     This usually means that the module you are trying to deploy has a dependency that either 
-    conflicts with the same dependency in the simulator, but has a different version.  Or it
-    indicates that the dependencies in the module being deployed were build with a different 
+    conflicts with the same dependency in the simulator, but has a different version, or it
+    indicates that the dependencies in the module being deployed was built with a different 
     version of npm.  In most cases, deleteing `node_modules` from the module being deployed and
     re-running `npm install` will resolve this.
 

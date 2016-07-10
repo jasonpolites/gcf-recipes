@@ -44,7 +44,7 @@ To deploy an HTTP function, use the `--trigger-http` argument
 
     functions deploy <module> <function> --trigger-http
 
-### Executing a Cloud Function
+### Invoking a Function
 
 Start the Simulator
 

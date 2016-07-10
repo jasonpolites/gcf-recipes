@@ -145,7 +145,7 @@ Now when you invoke your function, you can debug!
 
 ### Known Issues and FAQ
 
- - If you see the following error in the console
+ - If you see the following error in the console when you stop the debugger:
 
     `Assertion failed: ((err) == (0)), function Stop, file ../src/debug-agent.cc, line 155.`
 

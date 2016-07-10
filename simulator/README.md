@@ -90,11 +90,19 @@ Functions running in the simulator run in their own (detached) process, so
 console logs from your function (e.g. `console.log()` calls) will not be piped to 
 the stdout stream of the simulator.  Instead a log file can be found in **logs/simulator.log**
 
-We recommend you *tail* this log in a separate console window while you're testing
+You can view the logs from your functions using the ``get-logs` command
+
+    `functions get-logs`
+
+By default this will return the most recent 20 log lines.  You can alter this with the `--limit` flag
+
+    `functions get-logs --limit 100`
+
+Alternatively, you can simply *tail* the log file itself
 
 Mac/Linux:
 
-    tail -f logs/simulator.log
+    `tail -f logs/simulator.log`
 
 (Note this log will automatically roll when it reaches 1MB)
 

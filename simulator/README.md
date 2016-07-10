@@ -90,7 +90,7 @@ Functions running in the simulator run in their own (detached) process, so
 console logs from your function (e.g. `console.log()` calls) will not be piped to 
 the stdout stream of the simulator.  Instead a log file can be found in **logs/simulator.log**
 
-You can view the logs from your functions using the ``get-logs` command
+You can view the logs from your functions using the `get-logs` command
 
     functions get-logs
 
@@ -143,7 +143,7 @@ Now when you invoke your function, you can debug!
 
 ![Debugging with Chrome Developer Tools](img/debugging.png "Debugging with Chrome Developer Tools")    
 
-#### Known Issues with Debugging
+### Known Issues and FAQ
 
  - If you see the following error in the console
 

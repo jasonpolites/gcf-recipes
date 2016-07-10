@@ -184,6 +184,7 @@ var self = {
   },
 
   getLogs: function(options) {
+    console.log('In getLogs');
     var limit = 20;
     if (options.limit) {
       limit = parseInt(options.limit);

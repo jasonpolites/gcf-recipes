@@ -20,7 +20,7 @@ const spawn = require('child_process').spawn;
 const config = require('../config.js');
 const logreader = require('./logreader.js');
 const fs = require('fs');
-const LOG_FILE_PATH = path.join(path.join(__dirname, config.logFilePath), config.logFileName);
+const LOG_FILE_PATH = path.join(__dirname, config.logFilePath, config.logFileName);
 const PID_PATH = path.join(__dirname, 'process.pid');
 
 const SIMULATOR_ROOT_URI = 'http://localhost:' + config.port;
@@ -208,6 +208,8 @@ var self = {
   },
 
   getLogs: function(writer, limit) {
+    console.log('In getLogs');
+    console.log(LOG_FILE_PATH);
     if (!limit) {
       limit = 20;
     }

@@ -80,9 +80,9 @@ A local configuration (**config.js**) file is provided that allows you to config
 | Property | Type | Description |
 |-------|---|----------|
 | port | integer | The TCP port on which the simulator will listen (default: 8008) | 
-| verbose | boolean | True if you want to see logs from the simulator itself (default: false) |
-| projectId | string | Your GCP project ID (default:none) |
-| timeout | integer | Timeout (ms) to wait for the simulator to start (default:3000) |
+| verbose | boolean | `true` if you want to see logs from the simulator itself (default: `false`) |
+| projectId | string | Your GCP project ID (default: none) |
+| timeout | integer | Timeout (ms) to wait for the simulator to start (default: 3000) |
 
 ### Logs
 

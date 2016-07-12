@@ -244,7 +244,6 @@ var self = {
   },
 
   call: function(name, options) {
-
     self._doIfRunning(function() {
       controller.call(name, options.data, function(err, body, response) {
         if (err) {

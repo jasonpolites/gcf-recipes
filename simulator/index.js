@@ -84,8 +84,10 @@ program
   .option('--data <json>',
     'The data to send to the function, expressed as a JSON document');
 
+
 program.parse(process.argv);
 
+// console.log(program);
 if (program.args.length < 1) {
-  program.help()
+  program.help();
 }

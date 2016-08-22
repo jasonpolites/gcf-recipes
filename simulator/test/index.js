@@ -3,23 +3,27 @@ var sinon = require('sinon');
 var proxyquire = require('proxyquire').noCallThru();
 var execSync = require('child_process').exec;
 
-var commander = require('../command.js');
+var controller = require('../app/controller.js');
+
+var PROJECT_ID = 'foobar';
 
 // Empty writer
-commander.writer = {
+controller.writer = {
   log: function() {},
   error: function() {},
   write: function() {}
 };
 
-describe('Cloud Functions Emulator Tests', function() {
+describe('Cloud Functions Simulator Tests', function() {
 
   var TEST_MODULE = __dirname + '/test_module';
 
   beforeEach(function(done) {
-    commander.status({}, function(err) {
+    controller.status(function(err, status) {
       if (err) {
-        commander.start({}, done);
+        done(err);
+      } else if (status === controller.STOPPED) {
+        controller.start(PROJECT_ID, false, done);
       } else {
         done();
       }
@@ -27,9 +31,11 @@ describe('Cloud Functions Emulator Tests', function() {
   });
 
   afterEach(function(done) {
-    commander.status({}, function(err) {
-      if (!err) {
-        commander.clear({}, done);
+    controller.status(function(err, status) {
+      if (err) {
+        done(err);
+      } else if (status !== controller.STOPPED) {
+        controller.clear(done);
       } else {
         done();
       }
@@ -37,77 +43,97 @@ describe('Cloud Functions Emulator Tests', function() {
   });
 
   after(function(done) {
-    commander.status({}, function(err) {
-      if (!err) {
-        commander.stop({}, done);
+    controller.status(function(err, status) {
+      if (err) {
+        done(err);
+      } else if (status === controller.RUNNING) {
+        controller.stop(done);
       } else {
         done();
       }
     });
   });
 
-  it('Test status reports correct state after emulator start/stop', function(done) {
-    // Expect to start running
-    commander.status({}, function(err) {
-      if (err) {
-        done(new Error(err));
-        return;
-      }
-      // Stop the emulator
-      commander.stop({}, function(err) {
+  it('Test status reports correct state after emulator start/stop',
+    function(done) {
+
+      //Expect to start in a RUNNING state
+      controller.status(function(err, status) {
+
         if (err) {
           done(new Error(err));
           return;
         }
 
-        // We now expect it to report stopped
-        commander.status({}, function(err) {
+        if (status !== controller.RUNNING) {
+          done(new Error('Simulator not running'));
+          return;
+        }
+
+        // Stop the emulator
+        controller.stop(function(err) {
           if (err) {
-            done();
-          } else {
-            done(new Error(
-              'Status did not report STOPPED after stop was called'
-            ));
+            done(new Error(err));
+            return;
           }
+
+          // We now expect it to report stopped
+          controller.status(function(err, status) {
+            if (status === controller.STOPPED) {
+              done();
+            } else {
+              done(new Error(
+                'Status did not report STOPPED after stop was called'
+              ));
+            }
+          });
         });
       });
     });
-  });
 
-  it('Test status reports correct state after emulator restart', function(done) {
+  it('Test status reports correct state after emulator restart', function(
+    done) {
     // Expect to start running
-    commander.status({}, function(err) {
+    controller.status(function(err, status) {
       if (err) {
         done(new Error(err));
         return;
       }
-      // Restart the emulator
-      commander.restart({}, function(err) {
-        if (err) {
-          done(new Error(err));
-          return;
-        }
 
-        // We now expect it to report started
-        commander.status({}, function(err) {
+      if (status === controller.RUNNING) {
+        // Restart the emulator
+        controller.restart(function(err) {
           if (err) {
-            done(new Error(
-              'Status did not report RUNNING after restart was called'
-            ));
-          } else {
-            done();
+            done(new Error(err));
+            return;
           }
+
+          // We now expect it to report running
+          controller.status(function(err, status) {
+            if (err) {
+              done(new Error(err));
+            } else if (status !== controller.RUNNING) {
+              done(new Error(
+                'Status did not report RUNNING after restart was called'
+              ));
+            } else {
+              done();
+            }
+          });
         });
-      });
+      } else {
+        done(new Error('Simulator not running'));
+      }
     });
   });
 
-  it('Deploys without error when the module and function exist', function(done) {
-    commander.deploy(TEST_MODULE, 'hello', {}, done);
+  it('Deploys without error when the module and function exist', function(
+    done) {
+    controller.deploy(TEST_MODULE, 'hello', {}, done);
   });
 
   it('Fails deployment when the module doesn\'t exist', function(done) {
-    commander.deploy('foobar', 'hello', {}, function(err) {
+    controller.deploy('foobar', 'hello', {}, function(err) {
       if (err) {
         done();
         return;
@@ -117,7 +143,7 @@ describe('Cloud Functions Emulator Tests', function() {
   });
 
   it('Fails deployment when the function doesn\'t exist', function(done) {
-    commander.deploy(TEST_MODULE, 'foobar', {}, function(err) {
+    controller.deploy(TEST_MODULE, 'foobar', {}, function(err) {
       if (err) {
         done();
         return;
@@ -126,14 +152,15 @@ describe('Cloud Functions Emulator Tests', function() {
     });
   });
 
-  it('Returns the expected values in the list after deployment', function(done) {
-    commander.deploy(TEST_MODULE, 'hello', {}, function(err) {
+  it('Returns the expected values in the list after deployment', function(
+    done) {
+    controller.deploy(TEST_MODULE, 'hello', 'B', function(err) {
       if (err) {
         done(err);
         return;
       }
 
-      commander.list({}, function(err, list) {
+      controller.list(function(err, list) {
         if (err) {
           done(err);
           return;
@@ -157,49 +184,155 @@ describe('Cloud Functions Emulator Tests', function() {
     });
   });
 
-  it('Returns the expected values in the list after deployment AND clear', function(
-    done) {
-    commander.deploy(TEST_MODULE, 'hello', {}, function(err) {
-      if (err) {
-        done(err);
-        return;
-      }
-
-      commander.clear({}, function(err) {
+  it('Returns the expected values in the list after deployment AND clear',
+    function(
+      done) {
+      controller.deploy(TEST_MODULE, 'hello', 'B', function(err) {
         if (err) {
           done(err);
           return;
         }
-        commander.list({}, function(err, list) {
-          try {
-            chai.expect(list).to.deep.equal({});
-            done();
-          } catch (e) {
-            done(e);
+
+        controller.clear(function(err) {
+          if (err) {
+            done(err);
+            return;
           }
+          controller.list(function(err, list) {
+            try {
+              chai.expect(list).to.deep.equal({});
+              done();
+            } catch (e) {
+              done(e);
+            }
+          });
         });
       });
     });
-  });
 
   it('Calling a function works', function(
     done) {
-    commander.deploy(TEST_MODULE, 'hello', {}, function(err) {
+    controller.deploy(TEST_MODULE, 'hello', 'B', function(err) {
       if (err) {
         done(err);
         return;
       }
-      commander.call('hello', {}, function(err, body) {
+      controller.call('hello', {}, function(err, body) {
         if (err) {
           done(err);
           return;
         }
         try {
-          chai.expect(JSON.parse(body)).to.equal('Hello World');
+          chai.expect(body).to.equal('Hello World');
           done();
         } catch (e) {
           done(e);
         }
+      });
+    });
+  });
+
+  it('Calling a function with JSON data works', function(
+    done) {
+    controller.deploy(TEST_MODULE, 'helloData', 'B', function(err) {
+      if (err) {
+        done(err);
+        return;
+      }
+      controller.call('helloData', {
+        "foo": "bar"
+      }, function(err, body) {
+        if (err) {
+          done(err);
+          return;
+        }
+        try {
+          chai.expect(body).to.equal('bar');
+          done();
+        } catch (e) {
+          done(e);
+        }
+      });
+    });
+  });
+
+  it('Calling a function with a string of a JSON object works', function(
+    done) {
+    controller.deploy(TEST_MODULE, 'helloData', 'B', function(err) {
+      if (err) {
+        done(err);
+        return;
+      }
+      controller.call('helloData', '{\"foo\": \"bar\"}', function(
+        err, body) {
+        if (err) {
+          done(err);
+          return;
+        }
+        try {
+          chai.expect(body).to.equal('bar');
+          done();
+        } catch (e) {
+          done(e);
+        }
+      });
+    });
+  });
+
+  it('Returning JSON from a function works', function(
+    done) {
+    controller.deploy(TEST_MODULE, 'helloJSON', 'B', function(err) {
+      if (err) {
+        done(err);
+        return;
+      }
+      controller.call('helloJSON', {}, function(err, body) {
+        if (err) {
+          done(err);
+          return;
+        }
+        try {
+          chai.expect(body).to.deep.equal({
+            message: 'Hello World'
+          });
+          done();
+        } catch (e) {
+          done(e);
+        }
+      });
+    });
+  });
+
+  it('Functions that throw exceptions don\'t crash the process', function(
+    done) {
+    controller.deploy(TEST_MODULE, 'helloThrow', 'B', function(err) {
+      if (err) {
+        done(err);
+        return;
+      }
+      controller.call('helloThrow', {}, function(err, body) {
+        if (err) {
+          try {
+            chai.expect(err).to.equal('uncaught exception!');
+
+            // Ensure the process is still running
+            controller.status(function(err, status) {
+              if (err) {
+                done(new Error(err));
+              } else if (status !== controller.RUNNING) {
+                done(new Error(
+                  'Status did not report RUNNING after uncaught exception'
+                ));
+              } else {
+                done();
+              }
+            });
+          } catch (e) {
+            done(e);
+          }
+          return;
+        }
+        done('Expected error but didn\'t get one');
       });
     });
   });

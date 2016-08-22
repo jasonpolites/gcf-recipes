@@ -438,11 +438,19 @@ var self = {
    * @param {Function} callback The callback function to be called upon success/failure
    */
   call: function(name, data, callback) {
+    if (!data) {
+      data = {}
+    };
     self._action('POST', SIMULATOR_ROOT_URI + '/' + name,
       function(err, response, body) {
+
         if (err) {
           if (callback) {
-            callback(err);
+            if (err.stack) {
+              callback(err.stack);
+            } else {
+              callback(err);
+            }
           }
           return;
         }
@@ -548,7 +556,13 @@ var self = {
       };
 
       if (method === 'POST' && data) {
-        options.json = JSON.parse(data);
+        if (data.toString() == '[object String]' || typeof data ===
+          'string') {
+          options.json = JSON.parse(data);
+        } else {
+          // Assume object
+          options.json = data;
+        }
       }
 
       try {

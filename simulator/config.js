@@ -4,7 +4,7 @@ var conf = {
   port: 8008,
 
   // Set to true to see debug logs for the simulator itself
-  verbose: false,
+  verbose: true,
 
   // Your Cloud Platform project ID
   projectId: null,

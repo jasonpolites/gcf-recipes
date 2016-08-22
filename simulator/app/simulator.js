@@ -143,7 +143,6 @@ var self = {
     // Standard ExpressJS app.  Where possible this should mimic the *actual* 
     // setup of Cloud Functions regarding the use of body parsers etc.
     self._app = express();
-    self._app.use(self._errorHandler);
     self._app.use(bodyParser.json());
     self._app.use(bodyParser.raw());
     self._app.use(bodyParser.text());
@@ -161,6 +160,9 @@ var self = {
 
     // responseTime will allow us to track the execution time of a function
     self._app.use(responseTime());
+
+    // Define error handlers last
+    self._app.use(self._errorHandler);
 
     // Not really anything we need to do here, but responding to a browser GET
     // seems reasonable in case the developer wonders what's hogging their port
@@ -205,12 +207,20 @@ var self = {
       var p = path.resolve(req.query.path);
       var name = req.params.name;
 
-      console.debug('Loading module in path ' + p)
-      var mod = require(p);
+      console.debug('Loading module in path ' + p);
+      var mod = null;
+
+      try {
+        mod = require(p);
+      } catch (err) {
+        res.status(400).send(
+          '\nFailed to require module being deployed.  Make sure your module compiles and you have run `npm install` on it first\n' +
+          err.stack);
+        return;
+      }
 
       if (!mod[name]) {
-        res.status(404).send('No function found in module ' + req.query
-          .path +
+        res.status(404).send('\nNo function found in module ' + p +
           ' with name ' + name);
         return;
       }
@@ -308,6 +318,7 @@ var self = {
 
 
     /**
+     * Calls a function.
      * Main entry point for all function invocations.  The path will be the 
      * function name.  In the case of HTTP functions the request/response from 
      * the original request will be passed through.  In the case of BACKGROUND 
@@ -370,7 +381,16 @@ var self = {
       if (type === 'HTTP') {
 
         // Pass through HTTP
-        invoker.invoke(func, mod, req, res);
+        try {
+          invoker.invoke(func, mod, req, res);
+        } catch (e) {
+          if (e instanceof Error) {
+            // Error objects serialize to an empty JSON object.. how convenient :/
+            e = JSON.parse(JSON.stringify(e, Object.getOwnPropertyNames(
+              e)));
+          }
+          res.status(500).json(e);
+        }
 
         // Change the working directory back to the original
         process.chdir(cwd);
@@ -383,6 +403,11 @@ var self = {
           },
           failure: function(val) {
             process.chdir(cwd);
+            if (val instanceof Error) {
+              // Error objects serialize to an empty JSON object.. how convenient :/
+              val = JSON.parse(JSON.stringify(val, Object.getOwnPropertyNames(
+                val)));
+            }
             res.status(500).json(val);
           },
           done: function(val) {
@@ -394,7 +419,11 @@ var self = {
           }
         };
 
-        invoker.invoke(func, mod, context, req.body);
+        try {
+          invoker.invoke(func, mod, context, req.body);
+        } catch (e) {
+          context.failure(e);
+        }
       }
     } catch (err) {
       res.status(500).send(err.stack);
@@ -403,6 +432,7 @@ var self = {
 
   _errorHandler: function(err, req, res, next) {
     console.error(err.stack);
+    res.status(500).send(err.stack);
     next(err);
   },
 

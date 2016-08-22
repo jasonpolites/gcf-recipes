@@ -45,7 +45,8 @@ var self = {
 
     var debug = (options && options.debug) || false;
 
-    self.writer.log('Starting ' + APP_NAME + 'on port ' + config.port + '...');
+    self.writer.log('Starting ' + APP_NAME + 'on port ' + config.port +
+      '...');
 
     controller.start(projectId, debug, function(err, status) {
       if (err) {
@@ -121,7 +122,9 @@ var self = {
     controller.stop(function(err) {
       if (err) {
         self.writer.error(err);
-        callback(err);
+        if (callback) {
+          callback(err);
+        }
         return;
       }
 
@@ -197,7 +200,6 @@ var self = {
   },
 
   getLogs: function(options) {
-    console.log('In getLogs');
     var limit = 20;
     if (options.limit) {
       limit = parseInt(options.limit);
@@ -208,7 +210,8 @@ var self = {
   deploy: function(modulePath, entryPoint, options) {
     self._doIfRunning(function() {
       var type = (options.triggerHttp === true) ? 'H' : 'B';
-      controller.deploy(modulePath, entryPoint, type, function(err, body) {
+      controller.deploy(modulePath, entryPoint, type, function(err,
+        body) {
         if (err) {
           self.writer.error(err);
           self.writer.error('Deployment aborted'.red);
@@ -254,7 +257,8 @@ var self = {
           return;
         }
         self.writer.write("Function completed in:  ");
-        self.writer.write((response.headers['x-response-time'] + '\n')
+        self.writer.write((response.headers['x-response-time'] +
+            '\n')
           .green);
 
         self.writer.log(body);

@@ -1,5 +1,5 @@
 {
-  "name": "Http Samples",
+  "name": "ffmpeg-gcf",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,7 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "assistantsdk": "^1.0.22",
-    "request": "^2.72.0"
+    "bluebird": "^3.4.1",
+    "fluent-ffmpeg": "^2.1.0",
+    "gcloud": "^0.37.0"
   }
 }
